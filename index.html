@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>MoeChat</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Verdana, Arial, sans-serif;
+    background:#0b3d91;
+    color:#222;
+}
+
+/* Header */
+.header{
+    background:#1c4fa3;
+    border-bottom:2px solid #002f6c;
+    padding:0;
+}
+
+.nav{
+    display:flex;
+    gap:0;
+    flex-wrap:wrap;
+}
+
+.nav a{
+    color:white;
+    text-decoration:none;
+    padding:12px 18px;
+    border-right:1px solid rgba(255,255,255,0.2);
+    font-size:14px;
+    font-weight:bold;
+}
+
+.nav a:hover{
+    background:#356bc5;
+}
+
+/* Banner */
+.banner{
+    width:100%;
+    height:220px;
+    object-fit:cover;
+    display:block;
+    border-bottom:3px solid #002f6c;
+}
+
+/* Main Content */
+.container{
+    max-width:1200px;
+    margin:15px auto;
+    padding:0 10px;
+}
+
+.post{
+    background:white;
+    border:1px solid #888;
+    margin-bottom:10px;
+    padding:10px;
+}
+
+.post-title{
+    font-size:18px;
+    font-weight:bold;
+    color:#0055aa;
+    text-decoration:none;
+}
+
+.post-title:hover{
+    text-decoration:underline;
+}
+
+.post-meta{
+    color:#666;
+    font-size:12px;
+    margin-top:4px;
+}
+
+.post-content{
+    margin-top:8px;
+    line-height:1.4;
+}
+
+.score{
+    font-weight:bold;
+    color:#ff4500;
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <nav class="nav">
+        <a href="https://frostcat224.github.io/moechat/">Home</a>
+        <a href="https://frostcat224.github.io/moechat/popular">Popular</a>
+        <a href="https://frostcat224.github.io/moechat/recent">Recent</a>
+        <a href="https://frostcat224.github.io/moechat/trending">Trending</a>
+        <a href="https://frostcat224.github.io/moechat/controversial">Controversial</a>
+        <a href="https://frostcat224.github.io/moechat/news">News</a>
+        <a href="https://frostcat224.github.io/moechat/forums">Forums</a>
+    </nav>
+</header>
+
+<img
+class="banner"
+src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2000"
+alt="Banner">
+
+<div class="container">
+
+    <div class="post">
+        <a href="#" class="post-title">
+            1
+        </a>
+        <div class="post-meta">
+            <span class="score">▲ 245</span> • posted by FrostCat224 • 2 hours ago
+        </div>
+        <div class="post-content">
+            hi
+        </div>
+    </div>
+
+    <div class="post">
+        <a href="#" class="post-title">
+            2
+        </a>
+        <div class="post-meta">
+            <span class="score">▲ 118</span> • posted by FrostCat224 • 5 hours ago
+        </div>
+        <div class="post-content">
+            bye
+        </div>
+    </div>
+
+    <div class="post">
+        <a href="#" class="post-title">
+            3
+        </a>
+        <div class="post-meta">
+            <span class="score">▲ 89</span> • posted by FrostCat224 • 1 day ago
+        </div>
+        <div class="post-content">
+            guten tag
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
