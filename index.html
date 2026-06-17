@@ -193,7 +193,7 @@ import {
 from
 "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
-const firebaseConfig = {
+const firebaseConfig={
 	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
 	authDomain:"moechat-224.firebaseapp.com",
 	databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
@@ -204,8 +204,11 @@ const firebaseConfig = {
 	measurementId:"G-R6MRNWQGZ2"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const app=
+initializeApp(firebaseConfig);
+
+const db=
+getDatabase(app);
 
 const postsDiv=
 document.getElementById("posts");
@@ -225,9 +228,20 @@ document
 };
 
 function formatDate(ts){
+
 	return new Date(ts)
 	.toLocaleString();
+
 }
+
+const titleInput=
+document.getElementById("title");
+
+const contentInput=
+document.getElementById("content");
+
+const authorInput=
+document.getElementById("author");
 
 document
 .getElementById("submit")
@@ -244,8 +258,10 @@ async()=>{
 	authorInput.value.trim();
 
 	if(!title||!content){
+
 		alert("Fill everything");
 		return;
+
 	}
 
 	const newPost=
@@ -269,17 +285,9 @@ async()=>{
 
 	titleInput.value="";
 	contentInput.value="";
+	authorInput.value="";
 
 };
-
-const titleInput=
-document.getElementById("title");
-
-const contentInput=
-document.getElementById("content");
-
-const authorInput=
-document.getElementById("author");
 
 async function vote(
 	id,
@@ -293,8 +301,9 @@ async function vote(
 	localStorage
 	.getItem(key);
 
-	if(old===type)
-	return;
+	if(old){
+		return;
+	}
 
 	const postRef=
 	ref(
@@ -305,23 +314,20 @@ async function vote(
 	const snap=
 	await get(postRef);
 
-	if(!snap.exists())
-	return;
+	if(!snap.exists()){
+		return;
+	}
 
 	let score=
 	snap.val().score||0;
 
-	if(old==="up")
-	score--;
+	if(type==="up"){
+		score++;
+	}
 
-	if(old==="down")
-	score++;
-
-	if(type==="up")
-	score++;
-
-	if(type==="down")
-	score--;
+	if(type==="down"){
+		score--;
+	}
 
 	await update(
 		postRef,
@@ -342,6 +348,7 @@ window.vote=
 vote;
 
 onValue(
+
 	ref(
 		db,
 		"posts"
@@ -356,10 +363,10 @@ onValue(
 
 	if(!data){
 
-	postsDiv.innerHTML=
-	"No posts";
+		postsDiv.innerHTML=
+		"No posts";
 
-	return;
+		return;
 
 	}
 
@@ -427,7 +434,7 @@ ${post.content}
 
 `;
 
-});
+	});
 
 }
 
