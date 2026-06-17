@@ -139,7 +139,7 @@ button{
 
 <input id="username" placeholder="Username">
 <input id="email" type="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password (don't use one you use in other places)">
+<input id="password" type="password" placeholder="Password">
 
 <button id="register">Register</button>
 <button id="login">Login</button>
@@ -164,9 +164,7 @@ button{
 
 <script type="module">
 
-import {
-	initializeApp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 import {
 	getDatabase,
@@ -183,8 +181,7 @@ import {
 	createUserWithEmailAndPassword,
 	signInWithEmailAndPassword,
 	signOut,
-	onAuthStateChanged,
-	updateProfile
+	onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 /* ---------------- FIREBASE ---------------- */
@@ -228,12 +225,14 @@ function formatDate(ts){
 	return new Date(ts).toLocaleString();
 }
 
-/* ---------------- AUTH ---------------- */
+/* ---------------- REGISTER ---------------- */
 
 document.getElementById("register").onclick = async () => {
+
 	try {
 
 		const username = usernameInput.value.trim();
+
 		if (!username) {
 			alert("Enter username");
 			return;
@@ -245,24 +244,17 @@ document.getElementById("register").onclick = async () => {
 			passwordInput.value
 		);
 
-		// store username in auth profile (IMPORTANT)
-		await updateProfile(cred.user, {
-			displayName: username
+		await set(ref(db, "users/" + cred.user.uid), {
+			username,
+			email: cred.user.email
 		});
-
-		// keep database backup
-		await set(
-			ref(db, "users/" + cred.user.uid),
-			{
-				username,
-				email: cred.user.email
-			}
-		);
 
 	} catch (e) {
 		alert(e.message);
 	}
 };
+
+/* ---------------- LOGIN ---------------- */
 
 document.getElementById("login").onclick = async () => {
 	try {
@@ -275,6 +267,8 @@ document.getElementById("login").onclick = async () => {
 		alert(e.message);
 	}
 };
+
+/* ---------------- LOGOUT ---------------- */
 
 document.getElementById("logout").onclick = () => {
 	signOut(auth);
@@ -289,8 +283,7 @@ onAuthStateChanged(auth, async (user) => {
 		const snap = await get(ref(db, "users/" + user.uid));
 
 		const username =
-			user.displayName ||
-			(snap.exists() ? snap.val().username : user.email);
+			snap.exists() ? snap.val().username : user.email;
 
 		statusBox.textContent = "Logged in as: " + username;
 
@@ -300,7 +293,7 @@ onAuthStateChanged(auth, async (user) => {
 
 });
 
-/* ---------------- POST ---------------- */
+/* ---------------- POST (FIXED) ---------------- */
 
 document.getElementById("submit").onclick = async () => {
 
@@ -319,8 +312,15 @@ document.getElementById("submit").onclick = async () => {
 		return;
 	}
 
-	// AUTHOR FIX: use displayName first
-	const username = user.displayName || "Unknown";
+	// 🔥 ALWAYS fetch username from DB (NO Unknown EVER)
+	const snap = await get(ref(db, "users/" + user.uid));
+
+	if (!snap.exists() || !snap.val().username) {
+		alert("Username missing. Please re-register.");
+		return;
+	}
+
+	const username = snap.val().username;
 
 	const newPost = push(ref(db, "posts"));
 
@@ -335,21 +335,17 @@ document.getElementById("submit").onclick = async () => {
 
 	titleInput.value = "";
 	contentInput.value = "";
-
 };
 
-/* ---------------- VOTING ---------------- */
+/* ---------------- VOTE ---------------- */
 
 async function vote(id, type){
 
 	const key = "vote_" + id;
 
-	const old = localStorage.getItem(key);
-
-	if (old) return;
+	if (localStorage.getItem(key)) return;
 
 	const postRef = ref(db, "posts/" + id);
-
 	const snap = await get(postRef);
 
 	if (!snap.exists()) return;
