@@ -1,93 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Moechat</title>
+<title>Moechat</title>
 
-	<style>
-		body{
-			margin:0;
-			font-family:Verdana;
-			background:#0b3d91;
-		}
+<style>
 
-		.header{
-			background:#1c4fa3;
-		}
+body{
+	margin:0;
+	font-family:Verdana;
+	background:#0b3d91;
+}
 
-		.nav{
-			display:flex;
-			flex-wrap:wrap;
-		}
+.header{
+	background:#1c4fa3;
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+}
 
-		.nav a{
-			color:white;
-			padding:12px 18px;
-			text-decoration:none;
-		}
+.nav{
+	display:flex;
+	flex-wrap:wrap;
+}
 
-		.banner{
-			width:768px;
-			height:80px;
-			display:block;
-			object-fit:cover;
-		}
+.nav a{
+	color:white;
+	padding:12px 18px;
+	text-decoration:none;
+}
 
-		.container{
-			max-width:1200px;
-			margin:auto;
-			padding:10px;
-		}
+.createBtn{
+	background:#2b6fff;
+	color:white;
+	border:none;
+	padding:12px 18px;
+}
 
-		.post,
-		.create{
-			background:white;
-			padding:10px;
-			margin-bottom:10px;
-			border:1px solid #888;
-		}
+.banner{
+	width:768px;
+	height:80px;
+	display:block;
+	object-fit:cover;
+}
 
-		.post-title{
-			font-size:18px;
-			font-weight:bold;
-			color:#0055aa;
-		}
+.container{
+	max-width:1200px;
+	margin:auto;
+	padding:10px;
+}
 
-		.post-meta{
-			font-size:12px;
-			color:#666;
-			margin-top:4px;
-		}
+.post,
+.create{
+	background:white;
+	padding:10px;
+	margin-bottom:10px;
+	border:1px solid #888;
+}
 
-		.post-content{
-			margin-top:8px;
-		}
+.create{
+	display:none;
+}
 
-		input,
-		textarea{
-			width:100%;
-			box-sizing:border-box;
-			padding:8px;
-			margin-top:5px;
-			margin-bottom:10px;
-		}
+.post-title{
+	font-size:18px;
+	font-weight:bold;
+	color:#0055aa;
+}
 
-		button{
-			padding:8px 14px;
-			cursor:pointer;
-		}
+.post-meta{
+	font-size:12px;
+	color:#666;
+	margin-top:4px;
+}
 
-		.score{
-			color:#ff4500;
-		}
-	</style>
+.post-content{
+	margin-top:8px;
+}
+
+input,
+textarea{
+	width:100%;
+	box-sizing:border-box;
+	padding:8px;
+	margin-top:5px;
+	margin-bottom:10px;
+}
+
+button{
+	cursor:pointer;
+}
+
+.vote{
+	font-size:18px;
+	cursor:pointer;
+	user-select:none;
+	padding:0 4px;
+}
+
+.score{
+	color:#ff4500;
+	font-weight:bold;
+}
+
+.active{
+	color:#ff0000;
+}
+
+</style>
 </head>
 
 <body>
 
-	<header class="header">
+<header class="header">
+
 <nav class="nav">
 <a href="https://frostcat224.github.io/moechat/">Home</a>
 <a href="https://frostcat224.github.io/moechat/top">Top</a>
@@ -97,6 +125,13 @@
 <a href="https://frostcat224.github.io/moechat/news">News</a>
 <a href="https://frostcat224.github.io/moechat/forums">Forums</a>
 </nav>
+
+<button
+id="toggleCreate"
+class="createBtn">
+＋ Post
+</button>
+
 </header>
 
 <img
@@ -104,154 +139,301 @@ class="banner"
 src="https://frostcat224.github.io/moechat/banners/logo.png"
 alt="Banner">
 
-	<div class="container">
+<div class="container">
 
-		<div class="create">
-			<h3>Create Post</h3>
+<div
+class="create"
+id="createBox">
 
-			<input id="author" placeholder="Username">
+<h3>Create Post</h3>
 
-			<input id="title" placeholder="Title">
+<input
+id="author"
+placeholder="Username">
 
-			<textarea
-				id="content"
-				rows="5"
-				placeholder="Content"
-			></textarea>
+<input
+id="title"
+placeholder="Title">
 
-			<button id="submit">
-				Post
-			</button>
-		</div>
+<textarea
+id="content"
+rows="5"
+placeholder="Content">
+</textarea>
 
-		<div id="posts">
-			Loading...
-		</div>
+<button id="submit">
+Post
+</button>
 
-	</div>
+</div>
 
-	<script type="module">
+<div id="posts">
+Loading...
+</div>
 
-		import {
-			initializeApp
-		} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+</div>
 
-		import {
-			getDatabase,
-			ref,
-			onValue,
-			push,
-			set
-		} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+<script type="module">
 
-		const firebaseConfig = {
-			apiKey: "AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
-            authDomain: "moechat-224.firebaseapp.com",
-            databaseURL: "https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "moechat-224",
-            storageBucket: "moechat-224.firebasestorage.app",
-            messagingSenderId: "147503997820",
-            appId: "1:147503997820:web:1bb59dc4936825af87baf9",
-            measurementId: "G-R6MRNWQGZ2"
-		};
+import {
+	initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
-		const app = initializeApp(firebaseConfig);
-		const db = getDatabase(app);
+import {
+	getDatabase,
+	ref,
+	onValue,
+	push,
+	set,
+	update,
+	get
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
-		const postsDiv = document.getElementById("posts");
+const firebaseConfig = {
+	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+	authDomain:"moechat-224.firebaseapp.com",
+	databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+	projectId:"moechat-224",
+	storageBucket:"moechat-224.firebasestorage.app",
+	messagingSenderId:"147503997820",
+	appId:"1:147503997820:web:1bb59dc4936825af87baf9",
+	measurementId:"G-R6MRNWQGZ2"
+};
 
-		function formatDate(ts){
-			return new Date(ts).toLocaleString();
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+const postsDiv=
+document.getElementById("posts");
+
+document
+.getElementById("toggleCreate")
+.onclick=()=>{
+
+	const box=
+	document.getElementById("createBox");
+
+	box.style.display=
+	box.style.display==="block"
+	? "none"
+	: "block";
+
+};
+
+function formatDate(ts){
+	return new Date(ts)
+	.toLocaleString();
+}
+
+document
+.getElementById("submit")
+.onclick=
+async()=>{
+
+	const title=
+	titleInput.value.trim();
+
+	const content=
+	contentInput.value.trim();
+
+	const author=
+	authorInput.value.trim();
+
+	if(!title||!content){
+		alert("Fill everything");
+		return;
+	}
+
+	const newPost=
+	push(
+		ref(db,"posts")
+	);
+
+	await set(
+		newPost,
+		{
+			title,
+			content,
+			author:
+			author||
+			"Anonymous",
+			score:0,
+			timestamp:
+			Date.now()
 		}
+	);
 
-		document.getElementById("submit").onclick = async () => {
+	titleInput.value="";
+	contentInput.value="";
 
-			const title =
-				document.getElementById("title")
-				.value
-				.trim();
+};
 
-			const content =
-				document.getElementById("content")
-				.value
-				.trim();
+const titleInput=
+document.getElementById("title");
 
-			const author =
-				document.getElementById("author")
-				.value
-				.trim();
+const contentInput=
+document.getElementById("content");
 
-			if(!title || !content){
-				alert("Fill everything");
-				return;
-			}
+const authorInput=
+document.getElementById("author");
 
-			const newPost =
-				push(
-					ref(db, "posts")
-				);
+async function vote(
+	id,
+	type
+){
 
-			await set(newPost, {
-				title,
-				content,
-				author: author || "Anonymous",
-				score: 0,
-				timestamp: Date.now()
-			});
+	const key=
+	"vote_"+id;
 
-			document.getElementById("title").value = "";
-			document.getElementById("content").value = "";
-		};
+	const old=
+	localStorage
+	.getItem(key);
 
-		onValue(
-			ref(db, "posts"),
-			(snapshot) => {
+	if(old===type)
+	return;
 
-				const data = snapshot.val();
+	const postRef=
+	ref(
+		db,
+		"posts/"+id
+	);
 
-				postsDiv.innerHTML = "";
+	const snap=
+	await get(postRef);
 
-				if(!data){
-					postsDiv.innerHTML = "No posts";
-					return;
-				}
+	if(!snap.exists())
+	return;
 
-				Object
-					.entries(data)
-					.sort(
-						(a, b) =>
-						b[1].timestamp - a[1].timestamp
-					)
-					.forEach(([id, post]) => {
+	let score=
+	snap.val().score||0;
 
-						postsDiv.innerHTML += `
-							<div class="post">
+	if(old==="up")
+	score--;
 
-								<div class="post-title">
-									${post.title}
-								</div>
+	if(old==="down")
+	score++;
 
-								<div class="post-meta">
-									<span class="score">
-										▲ ${post.score}
-									</span>
-									• posted by ${post.author}
-									• ${formatDate(post.timestamp)}
-								</div>
+	if(type==="up")
+	score++;
 
-								<div class="post-content">
-									${post.content}
-								</div>
+	if(type==="down")
+	score--;
 
-							</div>
-						`;
+	await update(
+		postRef,
+		{
+			score
+		}
+	);
 
-					});
+	localStorage
+	.setItem(
+		key,
+		type
+	);
 
-			}
-		);
+}
 
-	</script>
+window.vote=
+vote;
+
+onValue(
+	ref(
+		db,
+		"posts"
+	),
+
+	(snapshot)=>{
+
+	const data=
+	snapshot.val();
+
+	postsDiv.innerHTML="";
+
+	if(!data){
+
+	postsDiv.innerHTML=
+	"No posts";
+
+	return;
+
+	}
+
+	Object
+	.entries(data)
+
+	.sort(
+	(a,b)=>
+	b[1].timestamp-
+	a[1].timestamp
+	)
+
+	.forEach(
+
+	([id,post])=>{
+
+	const voted=
+	localStorage
+	.getItem(
+	"vote_"+id
+	);
+
+	postsDiv.innerHTML+=`
+
+<div class="post">
+
+<div class="post-title">
+${post.title}
+</div>
+
+<div class="post-meta">
+
+<span
+class="vote ${voted==="up"?"active":""}"
+onclick="vote('${id}','up')">
+▲
+</span>
+
+<span class="score">
+${post.score}
+</span>
+
+<span
+class="vote ${voted==="down"?"active":""}"
+onclick="vote('${id}','down')">
+▼
+</span>
+
+•
+posted by
+${post.author}
+
+•
+${formatDate(
+post.timestamp
+)}
+
+</div>
+
+<div class="post-content">
+${post.content}
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+);
+
+</script>
 
 </body>
 </html>
