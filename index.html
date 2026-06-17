@@ -1,153 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Moechat</title>
+	<title>Moechat</title>
 
-<style>
-body{
-    margin:0;
-    font-family:Verdana, Arial, sans-serif;
-    background:#0b3d91;
-    color:#222;
-}
+	<style>
+		body{
+			margin:0;
+			font-family:Verdana;
+			background:#0b3d91;
+		}
 
-/* Header */
-.header{
-    background:#1c4fa3;
-    border-bottom:2px solid #002f6c;
-    padding:0;
-}
+		.header{
+			background:#1c4fa3;
+		}
 
-.nav{
-    display:flex;
-    gap:0;
-    flex-wrap:wrap;
-}
+		.nav{
+			display:flex;
+			flex-wrap:wrap;
+		}
 
-.nav a{
-    color:white;
-    text-decoration:none;
-    padding:12px 18px;
-    border-right:1px solid rgba(255,255,255,0.2);
-    font-size:14px;
-    font-weight:bold;
-}
+		.nav a{
+			color:white;
+			padding:12px 18px;
+			text-decoration:none;
+		}
 
-.nav a:hover{
-    background:#356bc5;
-}
+		.banner{
+			width:768px;
+			height:80px;
+			display:block;
+			object-fit:cover;
+		}
 
-/* Banner */
-.banner{
-    width:768px;
-    height:80px;
-    object-fit:cover;
-    display:block;
-}
+		.container{
+			max-width:1200px;
+			margin:auto;
+			padding:10px;
+		}
 
-/* Main Content */
-.container{
-    max-width:1200px;
-    margin:15px auto;
-    padding:0 10px;
-}
+		.post,
+		.create{
+			background:white;
+			padding:10px;
+			margin-bottom:10px;
+			border:1px solid #888;
+		}
 
-.post{
-    background:white;
-    border:1px solid #888;
-    margin-bottom:10px;
-    padding:10px;
-}
+		.post-title{
+			font-size:18px;
+			font-weight:bold;
+			color:#0055aa;
+		}
 
-.post-title{
-    font-size:18px;
-    font-weight:bold;
-    color:#0055aa;
-    text-decoration:none;
-}
+		.post-meta{
+			font-size:12px;
+			color:#666;
+			margin-top:4px;
+		}
 
-.post-title:hover{
-    text-decoration:underline;
-}
+		.post-content{
+			margin-top:8px;
+		}
 
-.post-meta{
-    color:#666;
-    font-size:12px;
-    margin-top:4px;
-}
+		input,
+		textarea{
+			width:100%;
+			box-sizing:border-box;
+			padding:8px;
+			margin-top:5px;
+			margin-bottom:10px;
+		}
 
-.post-content{
-    margin-top:8px;
-    line-height:1.4;
-}
+		button{
+			padding:8px 14px;
+			cursor:pointer;
+		}
 
-.score{
-    font-weight:bold;
-    color:#ff4500;
-}
-</style>
+		.score{
+			color:#ff4500;
+		}
+	</style>
 </head>
+
 <body>
 
-<header class="header">
-    <nav class="nav">
-        <a href="https://frostcat224.github.io/moechat/">Home</a>
-        <a href="https://frostcat224.github.io/moechat/top">Top</a>
-        <a href="https://frostcat224.github.io/moechat/bottom">Bottom</a>
-        <a href="https://frostcat224.github.io/moechat/recent">Recent</a>
-        <a href="https://frostcat224.github.io/moechat/trending">Trending</a>
-        <a href="https://frostcat224.github.io/moechat/news">News</a>
-        <a href="https://frostcat224.github.io/moechat/forums">Forums</a>
-    </nav>
-</header>
+	<header class="header">
+		<nav class="nav">
+			<a href="#">Home</a>
+		</nav>
+	</header>
 
-<img
-class="banner"
-src="https://frostcat224.github.io/moechat/banners/logo.png"
-alt="Banner">
+	<img
+		class="banner"
+		src="https://frostcat224.github.io/moechat/banners/logo.png"
+		alt="Banner"
+	>
 
-<div class="container">
+	<div class="container">
 
-    <div class="post">
-        <a href="#" class="post-title">
-            very cool post
-        </a>
-        <div class="post-meta">
-            <span class="score">▲ 0</span> • posted by FrostCat224 • 2 hours ago
-        </div>
-        <div class="post-content">
-            hi
-        </div>
-    </div>
+		<div class="create">
+			<h3>Create Post</h3>
 
-    <div class="post">
-        <a href="#" class="post-title">
-            goodbye
-        </a>
-        <div class="post-meta">
-            <span class="score">▲ 0</span> • posted by FrostCat224 • 5 hours ago
-        </div>
-        <div class="post-content">
-            bye
-        </div>
-    </div>
+			<input id="author" placeholder="Username">
 
-    <div class="post">
-        <a href="#" class="post-title">
-            hello in germany
-        </a>
-        <div class="post-meta">
-            <span class="score">▲ 0</span> • posted by FrostCat224 • 1 day ago
-        </div>
-        <div class="post-content">
-            guten tag
-        </div>
-    </div>
+			<input id="title" placeholder="Title">
 
-</div>
+			<textarea
+				id="content"
+				rows="5"
+				placeholder="Content"
+			></textarea>
+
+			<button id="submit">
+				Post
+			</button>
+		</div>
+
+		<div id="posts">
+			Loading...
+		</div>
+
+	</div>
+
+	<script type="module">
+
+		import {
+			initializeApp
+		} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+		import {
+			getDatabase,
+			ref,
+			onValue,
+			push,
+			set
+		} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+		const firebaseConfig = {
+			apiKey: "AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+            authDomain: "moechat-224.firebaseapp.com",
+            databaseURL: "https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "moechat-224",
+            storageBucket: "moechat-224.firebasestorage.app",
+            messagingSenderId: "147503997820",
+            appId: "1:147503997820:web:1bb59dc4936825af87baf9",
+            measurementId: "G-R6MRNWQGZ2"
+		};
+
+		const app = initializeApp(firebaseConfig);
+		const db = getDatabase(app);
+
+		const postsDiv = document.getElementById("posts");
+
+		function formatDate(ts){
+			return new Date(ts).toLocaleString();
+		}
+
+		document.getElementById("submit").onclick = async () => {
+
+			const title =
+				document.getElementById("title")
+				.value
+				.trim();
+
+			const content =
+				document.getElementById("content")
+				.value
+				.trim();
+
+			const author =
+				document.getElementById("author")
+				.value
+				.trim();
+
+			if(!title || !content){
+				alert("Fill everything");
+				return;
+			}
+
+			const newPost =
+				push(
+					ref(db, "posts")
+				);
+
+			await set(newPost, {
+				title,
+				content,
+				author: author || "Anonymous",
+				score: 0,
+				timestamp: Date.now()
+			});
+
+			document.getElementById("title").value = "";
+			document.getElementById("content").value = "";
+		};
+
+		onValue(
+			ref(db, "posts"),
+			(snapshot) => {
+
+				const data = snapshot.val();
+
+				postsDiv.innerHTML = "";
+
+				if(!data){
+					postsDiv.innerHTML = "No posts";
+					return;
+				}
+
+				Object
+					.entries(data)
+					.sort(
+						(a, b) =>
+						b[1].timestamp - a[1].timestamp
+					)
+					.forEach(([id, post]) => {
+
+						postsDiv.innerHTML += `
+							<div class="post">
+
+								<div class="post-title">
+									${post.title}
+								</div>
+
+								<div class="post-meta">
+									<span class="score">
+										▲ ${post.score}
+									</span>
+									• posted by ${post.author}
+									• ${formatDate(post.timestamp)}
+								</div>
+
+								<div class="post-content">
+									${post.content}
+								</div>
+
+							</div>
+						`;
+
+					});
+
+			}
+		);
+
+	</script>
 
 </body>
 </html>
