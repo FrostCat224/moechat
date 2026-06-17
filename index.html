@@ -194,7 +194,7 @@ import {
 	onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-/* ---------------- FIREBASE ---------------- */
+
 
 const firebaseConfig = {
 	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
@@ -211,7 +211,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-/* ---------------- DOM ---------------- */
 let feedIds = null;
 
 const postsDiv = document.getElementById("posts");
@@ -225,7 +224,6 @@ const statusBox = document.getElementById("status");
 const titleInput = document.getElementById("title");
 const contentInput = document.getElementById("content");
 
-/* ---------------- UI ---------------- */
 
 document.getElementById("toggleCreate").onclick = () => {
 	const box = document.getElementById("createBox");
@@ -236,7 +234,7 @@ function formatDate(ts){
 	return new Date(ts).toLocaleString();
 }
 
-/* ---------------- REGISTER ---------------- */
+
 
 document.getElementById("register").onclick = async () => {
 
@@ -265,7 +263,7 @@ document.getElementById("register").onclick = async () => {
 	}
 };
 
-/* ---------------- LOGIN ---------------- */
+
 
 document.getElementById("login").onclick = async () => {
 	try {
@@ -279,13 +277,11 @@ document.getElementById("login").onclick = async () => {
 	}
 };
 
-/* ---------------- LOGOUT ---------------- */
-
 document.getElementById("logout").onclick = () => {
 	signOut(auth);
 };
 
-/* ---------------- STATUS ---------------- */
+
 
 onAuthStateChanged(auth, async (user) => {
 
@@ -304,14 +300,13 @@ onAuthStateChanged(auth, async (user) => {
 
 });
 
-/* ---------------- POST (FIXED) ---------------- */
 
 document.getElementById("submit").onclick = async () => {
 
 	const user = auth.currentUser;
 
 	if (!user) {
-		alert("You must be logged in");
+		alert("You must be logged in!!!");
 		return;
 	}
 
@@ -319,11 +314,10 @@ document.getElementById("submit").onclick = async () => {
 	const content = contentInput.value.trim();
 
 	if (!title || !content) {
-		alert("Fill everything");
+		alert("Fill in everything!!!");
 		return;
 	}
 
-	// 🔥 ALWAYS fetch username from DB (NO Unknown EVER)
 	const snap = await get(ref(db, "users/" + user.uid));
 
 	if (!snap.exists() || !snap.val().username) {
@@ -348,8 +342,6 @@ document.getElementById("submit").onclick = async () => {
 	contentInput.value = "";
 };
 
-/* ---------------- VOTE ---------------- */
-
 async function vote(id, type){
 
 	const key = "vote_" + id;
@@ -373,7 +365,6 @@ async function vote(id, type){
 
 window.vote = vote;
 
-/* ---------------- LOAD POSTS ---------------- */
 
 onValue(ref(db, "posts"), (snapshot) => {
 
@@ -388,24 +379,22 @@ onValue(ref(db, "posts"), (snapshot) => {
 
 	let posts = Object.entries(data);
 
-	/* ---------------- RANDOM ONCE ---------------- */
+
 	if (!feedIds) {
 
-		// shuffle ONCE only
+
 		const shuffled = [...posts]
 			.sort(() => Math.random() - 0.5);
 
 		feedIds = shuffled.map(([id]) => id);
 	}
 
-	/* ---------------- BUILD STABLE FEED ---------------- */
 
 	let selected = feedIds
 		.map(id => [id, data[id]])
 		.filter(([id, post]) => post)
 		.slice(0, POSTS_TO_SHOW);
 
-	/* ---------------- RENDER ---------------- */
 
 	let html = "";
 
