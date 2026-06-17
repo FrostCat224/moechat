@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Moechat</title>
+
+<style>
+
+body{
+	margin:0;
+	font-family:Verdana;
+	background:#0b3d91;
+}
+
+.header{
+	background:#1c4fa3;
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+}
+
+.nav{
+	display:flex;
+	flex-wrap:wrap;
+}
+
+.nav a{
+	color:white;
+	padding:12px 18px;
+	text-decoration:none;
+}
+
+.createBtn{
+	background:#2b6fff;
+	color:white;
+	border:none;
+	padding:12px 18px;
+}
+
+.banner{
+	width:768px;
+	height:80px;
+	display:block;
+	object-fit:cover;
+}
+
+.container{
+	max-width:1200px;
+	margin:auto;
+	padding:10px;
+}
+
+.post,
+.create{
+	background:white;
+	padding:10px;
+	margin-bottom:10px;
+	border:1px solid #888;
+}
+
+.create{
+	display:none;
+}
+
+.post-title{
+    font-size:18px;
+    font-weight:bold;
+    color:#0055aa;
+    overflow-wrap:anywhere;
+}
+
+.post-meta{
+	font-size:12px;
+	color:#666;
+	margin-top:4px;
+}
+
+.post-content{
+    margin-top:8px;
+    overflow-wrap: anywhere;
+}
+
+input,
+textarea{
+	width:100%;
+	box-sizing:border-box;
+	padding:8px;
+	margin-top:5px;
+	margin-bottom:10px;
+}
+
+button{
+	cursor:pointer;
+}
+
+.vote{
+	font-size:18px;
+	cursor:pointer;
+	user-select:none;
+	padding:0 4px;
+}
+
+.score{
+	color:#ff4500;
+	font-weight:bold;
+}
+
+.active{
+	color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+	
+
+<header class="header">
+
+<nav class="nav">
+<a href="https://frostcat224.github.io/moechat/">Home</a>
+<a href="https://frostcat224.github.io/moechat/top">Top</a>
+<a href="https://frostcat224.github.io/moechat/bottom">Bottom</a>
+<a href="https://frostcat224.github.io/moechat/recent">Recent</a>
+<a href="https://frostcat224.github.io/moechat/trending">Trending</a>
+<a href="https://frostcat224.github.io/moechat/news">News</a>
+</nav>
+
+<button id="toggleCreate" class="createBtn">＋ Post</button>
+
+</header>
+
+<img class="banner" src="https://frostcat224.github.io/moechat/banners/logo.png" alt="Banner">
+
+<div class="container">
+
+<div class="create" id="createBox">
+
+<h3>Account</h3>
+
+<input id="username" placeholder="Username">
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button id="register">Register</button>
+<button id="login">Login</button>
+<button id="logout">Logout</button>
+
+<div id="status">Not logged in</div>
+
+<br>
+
+<h3>Create Post</h3>
+
+<input id="title" placeholder="Title">
+<textarea id="content" rows="5" placeholder="Content"></textarea>
+
+<button id="submit">Post</button>
+
+</div>
+
+<div id="posts">Loading...</div>
+
+</div>
+
+<script type="module">
+
+
+const POSTS_TO_SHOW = 10; 
+
+const RANDOM_PERCENT = 0.10;
+const RECENT_PERCENT = 0.40;
+const TRENDING_PERCENT = 0.50;
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+import {
+	getDatabase,
+	ref,
+	onValue,
+	push,
+	set,
+	update,
+	get
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+import {
+	getAuth,
+	createUserWithEmailAndPassword,
+	signInWithEmailAndPassword,
+	signOut,
+	onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+/* ---------------- FIREBASE ---------------- */
+
+const firebaseConfig = {
+	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+	authDomain:"moechat-224.firebaseapp.com",
+	databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+	projectId:"moechat-224",
+	storageBucket:"moechat-224.firebasestorage.app",
+	messagingSenderId:"147503997820",
+	appId:"1:147503997820:web:1bb59dc4936825af87baf9",
+	measurementId:"G-R6MRNWQGZ2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+/* ---------------- DOM ---------------- */
+let feedIds = null;
+
+const postsDiv = document.getElementById("posts");
+
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const usernameInput = document.getElementById("username");
+
+const statusBox = document.getElementById("status");
+
+const titleInput = document.getElementById("title");
+const contentInput = document.getElementById("content");
+
+/* ---------------- UI ---------------- */
+
+document.getElementById("toggleCreate").onclick = () => {
+	const box = document.getElementById("createBox");
+	box.style.display = box.style.display === "block" ? "none" : "block";
+};
+
+function formatDate(ts){
+	return new Date(ts).toLocaleString();
+}
+
+/* ---------------- REGISTER ---------------- */
+
+document.getElementById("register").onclick = async () => {
+
+	try {
+
+		const username = usernameInput.value.trim();
+
+		if (!username) {
+			alert("Enter username");
+			return;
+		}
+
+		const cred = await createUserWithEmailAndPassword(
+			auth,
+			emailInput.value,
+			passwordInput.value
+		);
+
+		await set(ref(db, "users/" + cred.user.uid), {
+			username,
+			email: cred.user.email
+		});
+
+	} catch (e) {
+		alert(e.message);
+	}
+};
+
+/* ---------------- LOGIN ---------------- */
+
+document.getElementById("login").onclick = async () => {
+	try {
+		await signInWithEmailAndPassword(
+			auth,
+			emailInput.value,
+			passwordInput.value
+		);
+	} catch (e) {
+		alert(e.message);
+	}
+};
+
+/* ---------------- LOGOUT ---------------- */
+
+document.getElementById("logout").onclick = () => {
+	signOut(auth);
+};
+
+/* ---------------- STATUS ---------------- */
+
+onAuthStateChanged(auth, async (user) => {
+
+	if (user) {
+
+		const snap = await get(ref(db, "users/" + user.uid));
+
+		const username =
+			snap.exists() ? snap.val().username : user.email;
+
+		statusBox.textContent = "Logged in as: " + username;
+
+	} else {
+		statusBox.textContent = "Not logged in";
+	}
+
+});
+
+/* ---------------- POST (FIXED) ---------------- */
+
+document.getElementById("submit").onclick = async () => {
+
+	const user = auth.currentUser;
+
+	if (!user) {
+		alert("You must be logged in");
+		return;
+	}
+
+	const title = titleInput.value.trim();
+	const content = contentInput.value.trim();
+
+	if (!title || !content) {
+		alert("Fill everything");
+		return;
+	}
+
+	// 🔥 ALWAYS fetch username from DB (NO Unknown EVER)
+	const snap = await get(ref(db, "users/" + user.uid));
+
+	if (!snap.exists() || !snap.val().username) {
+		alert("Username missing. Please re-register.");
+		return;
+	}
+
+	const username = snap.val().username;
+
+	const newPost = push(ref(db, "posts"));
+
+	await set(newPost, {
+		title,
+		content,
+		author: username,
+		uid: user.uid,
+		score: 0,
+		timestamp: Date.now()
+	});
+
+	titleInput.value = "";
+	contentInput.value = "";
+};
+
+/* ---------------- VOTE ---------------- */
+
+async function vote(id, type){
+
+	const key = "vote_" + id;
+
+	if (localStorage.getItem(key)) return;
+
+	const postRef = ref(db, "posts/" + id);
+	const snap = await get(postRef);
+
+	if (!snap.exists()) return;
+
+	let score = snap.val().score || 0;
+
+	if (type === "up") score++;
+	if (type === "down") score--;
+
+	await update(postRef, { score });
+
+	localStorage.setItem(key, type);
+}
+
+window.vote = vote;
+
+/* ---------------- LOAD POSTS ---------------- */
+
+onValue(ref(db, "posts"), (snapshot) => {
+
+	const data = snapshot.val();
+
+	postsDiv.innerHTML = "";
+
+	if (!data) {
+		postsDiv.innerHTML = "No posts";
+		return;
+	}
+
+	// convert to array
+	let posts = Object.entries(data);
+
+	// ✅ SORT BY RECENT (newest first)
+	posts.sort((a, b) => {
+		return (b[1].timestamp || 0) - (a[1].timestamp || 0);
+	});
+
+	// ✅ LIMIT TO 30 POSTS
+	let selected = posts.slice(0, 30);
+
+	let html = "";
+
+	selected.forEach(([id, post]) => {
+
+		const voted = localStorage.getItem("vote_" + id);
+
+		html += `
+<div class="post">
+
+<div class="post-title">${post.title}</div>
+
+<div class="post-meta">
+
+<span class="vote ${voted==="up"?"active":""}"
+onclick="vote('${id}','up')">▲</span>
+
+<span class="score">${post.score || 0}</span>
+
+<span class="vote ${voted==="down"?"active":""}"
+onclick="vote('${id}','down')">▼</span>
+
+• posted by ${post.author}
+• ${formatDate(post.timestamp)}
+
+</div>
+
+<div class="post-content">
+${post.content}
+</div>
+
+</div>
+`;
+	});
+
+	postsDiv.innerHTML = html;
+});
+</script>
+
+</body>
+</html>
