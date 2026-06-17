@@ -233,7 +233,9 @@ import {
 from
 "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-const firebaseConfig={
+/* ---------------- FIREBASE ---------------- */
+
+const firebaseConfig = {
 	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
 	authDomain:"moechat-224.firebaseapp.com",
 	databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
@@ -244,34 +246,31 @@ const firebaseConfig={
 	measurementId:"G-R6MRNWQGZ2"
 };
 
-const app=
-initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
-const db=
-getDatabase(app);
+/* ---------------- DOM ---------------- */
 
-const auth=
-getAuth(app);
+const postsDiv = document.getElementById("posts");
 
-const postsDiv=
-document.getElementById("posts");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const usernameInput = document.getElementById("username");
 
-const emailInput=
-document.getElementById("email");
+const statusBox = document.getElementById("status");
 
-const passwordInput=
-document.getElementById("password");
+const titleInput = document.getElementById("title");
+const contentInput = document.getElementById("content");
 
-const statusBox=
-document.getElementById("status");
+/* ---------------- UI ---------------- */
 
-document.getElementById("toggleCreate").onclick=()=>{
+document.getElementById("toggleCreate").onclick = () => {
 
-	const box=
-	document.getElementById("createBox");
+	const box = document.getElementById("createBox");
 
-	box.style.display=
-	box.style.display==="block"
+	box.style.display =
+	box.style.display === "block"
 	? "none"
 	: "block";
 
@@ -283,27 +282,41 @@ function formatDate(ts){
 
 /* ---------------- AUTH ---------------- */
 
-document.getElementById("register").onclick=
-async()=>{
+document.getElementById("register").onclick = async () => {
 
-	try{
+	try {
 
+		const username = usernameInput.value.trim();
+
+		if (!username) {
+			alert("Enter username");
+			return;
+		}
+
+		const cred =
 		await createUserWithEmailAndPassword(
 			auth,
 			emailInput.value,
 			passwordInput.value
 		);
 
-	}catch(e){
+		await set(
+			ref(db, "users/" + cred.user.uid),
+			{
+				username: username,
+				email: cred.user.email
+			}
+		);
+
+	} catch (e) {
 		alert(e.message);
 	}
 
 };
 
-document.getElementById("login").onclick=
-async()=>{
+document.getElementById("login").onclick = async () => {
 
-	try{
+	try {
 
 		await signInWithEmailAndPassword(
 			auth,
@@ -311,155 +324,155 @@ async()=>{
 			passwordInput.value
 		);
 
-	}catch(e){
+	} catch (e) {
 		alert(e.message);
 	}
 
 };
 
-document.getElementById("logout").onclick=
-()=>{
-
+document.getElementById("logout").onclick = () => {
 	signOut(auth);
-
 };
 
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth, async (user) => {
 
-	if(user){
-		statusBox.textContent=
-		"Logged in: "+user.email;
-	}else{
-		statusBox.textContent=
-		"Not logged in";
+	if (user) {
+
+		const snap =
+		await get(ref(db, "users/" + user.uid));
+
+		const username =
+		snap.exists()
+		? snap.val().username
+		: user.email;
+
+		statusBox.textContent =
+		"Logged in as: " + username;
+
+	} else {
+		statusBox.textContent = "Not logged in";
 	}
 
 });
 
-/* ---------------- POSTING ---------------- */
+/* ---------------- USERNAME FETCH ---------------- */
 
-const titleInput=
-document.getElementById("title");
+async function getUsername(uid){
 
-const contentInput=
-document.getElementById("content");
+	const snap =
+	await get(ref(db, "users/" + uid));
 
-document.getElementById("submit").onclick=
-async()=>{
+	if (snap.exists()) {
+		return snap.val().username;
+	}
 
-	const user=
-	auth.currentUser;
+	return "Unknown";
+}
 
-	if(!user){
-		alert("You must be logged in to post");
+/* ---------------- POST ---------------- */
+
+document.getElementById("submit").onclick = async () => {
+
+	const user = auth.currentUser;
+
+	if (!user) {
+		alert("You must be logged in");
 		return;
 	}
 
-	const title=
-	titleInput.value.trim();
+	const title = titleInput.value.trim();
+	const content = contentInput.value.trim();
 
-	const content=
-	contentInput.value.trim();
-
-	if(!title||!content){
+	if (!title || !content) {
 		alert("Fill everything");
 		return;
 	}
 
-	const newPost=
-	push(ref(db,"posts"));
+	const username = await getUsername(user.uid);
 
-	await set(newPost,{
+	const newPost = push(ref(db, "posts"));
+
+	await set(newPost, {
 		title,
 		content,
-		author:user.email,
-		uid:user.uid,
-		score:0,
-		timestamp:Date.now()
+		author: username,
+		uid: user.uid,
+		score: 0,
+		timestamp: Date.now()
 	});
 
-	titleInput.value="";
-	contentInput.value="";
+	titleInput.value = "";
+	contentInput.value = "";
 
 };
 
-/* ---------------- VOTING (unchanged) ---------------- */
+/* ---------------- VOTING ---------------- */
 
-async function vote(id,type){
+async function vote(id, type){
 
-	const key="vote_"+id;
+	const key = "vote_" + id;
 
-	const old=localStorage.getItem(key);
+	const old = localStorage.getItem(key);
 
-	if(old){
-		return;
-	}
+	if (old) return;
 
-	const postRef=ref(db,"posts/"+id);
+	const postRef = ref(db, "posts/" + id);
 
-	const snap=await get(postRef);
+	const snap = await get(postRef);
 
-	if(!snap.exists()){
-		return;
-	}
+	if (!snap.exists()) return;
 
-	let score=snap.val().score||0;
+	let score = snap.val().score || 0;
 
-	if(type==="up")score++;
-	if(type==="down")score--;
+	if (type === "up") score++;
+	if (type === "down") score--;
 
-	await update(postRef,{score});
+	await update(postRef, { score });
 
-	localStorage.setItem(key,type);
+	localStorage.setItem(key, type);
 
 }
 
-window.vote=vote;
+window.vote = vote;
 
 /* ---------------- LOAD POSTS ---------------- */
 
-onValue(ref(db,"posts"),(snapshot)=>{
+onValue(ref(db, "posts"), (snapshot) => {
 
-	const data=snapshot.val();
+	const data = snapshot.val();
 
-	postsDiv.innerHTML="";
+	postsDiv.innerHTML = "";
 
-	if(!data){
-		postsDiv.innerHTML="No posts";
+	if (!data) {
+		postsDiv.innerHTML = "No posts";
 		return;
 	}
 
 	Object.entries(data)
-	.sort((a,b)=>b[1].timestamp-a[1].timestamp)
-	.forEach(([id,post])=>{
+	.sort((a,b) => b[1].timestamp - a[1].timestamp)
+	.forEach(([id, post]) => {
 
-		const voted=
-		localStorage.getItem("vote_"+id);
+		const voted =
+		localStorage.getItem("vote_" + id);
 
-		postsDiv.innerHTML+=`
+		postsDiv.innerHTML += `
 
 <div class="post">
 
-<div class="post-title">
-${post.title}
-</div>
+<div class="post-title">${post.title}</div>
 
 <div class="post-meta">
 
-<span
-class="vote ${voted==="up"?"active":""}"
+<span class="vote ${voted==="up"?"active":""}"
 onclick="vote('${id}','up')">▲</span>
 
 <span class="score">${post.score}</span>
 
-<span
-class="vote ${voted==="down"?"active":""}"
+<span class="vote ${voted==="down"?"active":""}"
 onclick="vote('${id}','down')">▼</span>
 
-•
-posted by ${post.author}
-•
-${formatDate(post.timestamp)}
+• posted by ${post.author}
+• ${formatDate(post.timestamp)}
 
 </div>
 
