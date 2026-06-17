@@ -115,6 +115,7 @@ button{
 </head>
 
 <body>
+	
 
 <header class="header">
 
@@ -165,6 +166,13 @@ button{
 </div>
 
 <script type="module">
+
+
+const POSTS_TO_SHOW = 10; 
+
+const RANDOM_PERCENT = 0.10;
+const RECENT_PERCENT = 0.40;
+const TRENDING_PERCENT = 0.50;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
@@ -369,6 +377,7 @@ window.vote = vote;
 onValue(ref(db, "posts"), (snapshot) => {
 
 	const data = snapshot.val();
+
 	postsDiv.innerHTML = "";
 
 	if (!data) {
@@ -376,11 +385,98 @@ onValue(ref(db, "posts"), (snapshot) => {
 		return;
 	}
 
-	Object.entries(data)
-	.sort((a,b) => b[1].timestamp - a[1].timestamp)
-	.forEach(([id, post]) => {
+	let posts = Object.entries(data);
 
-		const voted = localStorage.getItem("vote_" + id);
+	/* ---------- RECENT ---------- */
+
+	const recentPosts = [...posts]
+	.sort((a,b) => b[1].timestamp - a[1].timestamp);
+
+	/* ---------- TRENDING ---------- */
+
+	const now = Date.now();
+
+	const trendingPosts = [...posts]
+	.sort((a,b) => {
+
+		const ageA =
+			(now - a[1].timestamp) / (1000 * 60 * 60 * 24);
+
+		const ageB =
+			(now - b[1].timestamp) / (1000 * 60 * 60 * 24);
+
+		const trendA =
+			(a[1].score || 0) - ageA * 2;
+
+		const trendB =
+			(b[1].score || 0) - ageB * 2;
+
+		return trendB - trendA;
+	});
+
+	/* ---------- RANDOM ---------- */
+
+	const randomPosts = [...posts]
+	.sort(() => Math.random() - 0.5);
+
+	/* ---------- PICK AMOUNTS ---------- */
+
+	const randomCount =
+		Math.round(POSTS_TO_SHOW * RANDOM_PERCENT);
+
+	const recentCount =
+		Math.round(POSTS_TO_SHOW * RECENT_PERCENT);
+
+	const trendingCount =
+		Math.round(POSTS_TO_SHOW * TRENDING_PERCENT);
+
+	let selected = [
+
+		...randomPosts.slice(0, randomCount),
+
+		...recentPosts.slice(0, recentCount),
+
+		...trendingPosts.slice(0, trendingCount)
+
+	];
+
+	/* ---------- REMOVE DUPLICATES ---------- */
+
+	const used = new Set();
+
+	selected = selected.filter(([id]) => {
+
+		if (used.has(id))
+			return false;
+
+		used.add(id);
+		return true;
+
+	});
+
+	/* ---------- FILL REMAINING SLOTS ---------- */
+
+	const remaining = recentPosts.filter(
+		([id]) => !used.has(id)
+	);
+
+	while (
+		selected.length < POSTS_TO_SHOW &&
+		remaining.length > 0
+	) {
+		selected.push(remaining.shift());
+	}
+
+	/* ---------- SHUFFLE ---------- */
+
+	selected.sort(() => Math.random() - 0.5);
+
+	/* ---------- RENDER ---------- */
+
+	selected.forEach(([id, post]) => {
+
+		const voted =
+			localStorage.getItem("vote_" + id);
 
 		postsDiv.innerHTML += `
 <div class="post">
@@ -392,7 +488,7 @@ onValue(ref(db, "posts"), (snapshot) => {
 <span class="vote ${voted==="up"?"active":""}"
 onclick="vote('${id}','up')">▲</span>
 
-<span class="score">${post.score}</span>
+<span class="score">${post.score || 0}</span>
 
 <span class="vote ${voted==="down"?"active":""}"
 onclick="vote('${id}','down')">▼</span>
@@ -411,7 +507,6 @@ ${post.content}
 	});
 
 });
-
 </script>
 
 </body>
