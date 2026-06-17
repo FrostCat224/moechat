@@ -387,98 +387,32 @@ onValue(ref(db, "posts"), (snapshot) => {
 
 	let posts = Object.entries(data);
 
-	/* ---------- RECENT ---------- */
+	/* ---------------- RANDOM ONCE ---------------- */
+	if (!feedIds) {
 
-	const recentPosts = [...posts]
-	.sort((a,b) => b[1].timestamp - a[1].timestamp);
+		// shuffle ONCE only
+		const shuffled = [...posts]
+			.sort(() => Math.random() - 0.5);
 
-	/* ---------- TRENDING ---------- */
-
-	const now = Date.now();
-
-	const trendingPosts = [...posts]
-	.sort((a,b) => {
-
-		const ageA =
-			(now - a[1].timestamp) / (1000 * 60 * 60 * 24);
-
-		const ageB =
-			(now - b[1].timestamp) / (1000 * 60 * 60 * 24);
-
-		const trendA =
-			(a[1].score || 0) - ageA * 2;
-
-		const trendB =
-			(b[1].score || 0) - ageB * 2;
-
-		return trendB - trendA;
-	});
-
-	/* ---------- RANDOM ---------- */
-
-	const randomPosts = [...posts]
-	.sort(() => Math.random() - 0.5);
-
-	/* ---------- PICK AMOUNTS ---------- */
-
-	const randomCount =
-		Math.round(POSTS_TO_SHOW * RANDOM_PERCENT);
-
-	const recentCount =
-		Math.round(POSTS_TO_SHOW * RECENT_PERCENT);
-
-	const trendingCount =
-		Math.round(POSTS_TO_SHOW * TRENDING_PERCENT);
-
-	let selected = [
-
-		...randomPosts.slice(0, randomCount),
-
-		...recentPosts.slice(0, recentCount),
-
-		...trendingPosts.slice(0, trendingCount)
-
-	];
-
-	/* ---------- REMOVE DUPLICATES ---------- */
-
-	const used = new Set();
-
-	selected = selected.filter(([id]) => {
-
-		if (used.has(id))
-			return false;
-
-		used.add(id);
-		return true;
-
-	});
-
-	/* ---------- FILL REMAINING SLOTS ---------- */
-
-	const remaining = recentPosts.filter(
-		([id]) => !used.has(id)
-	);
-
-	while (
-		selected.length < POSTS_TO_SHOW &&
-		remaining.length > 0
-	) {
-		selected.push(remaining.shift());
+		feedIds = shuffled.map(([id]) => id);
 	}
 
-	/* ---------- SHUFFLE ---------- */
+	/* ---------------- BUILD STABLE FEED ---------------- */
 
-	selected.sort(() => Math.random() - 0.5);
+	let selected = feedIds
+		.map(id => [id, data[id]])
+		.filter(([id, post]) => post)
+		.slice(0, POSTS_TO_SHOW);
 
-	/* ---------- RENDER ---------- */
+	/* ---------------- RENDER ---------------- */
+
+	let html = "";
 
 	selected.forEach(([id, post]) => {
 
-		const voted =
-			localStorage.getItem("vote_" + id);
+		const voted = localStorage.getItem("vote_" + id);
 
-		postsDiv.innerHTML += `
+		html += `
 <div class="post">
 
 <div class="post-title">${post.title}</div>
@@ -506,6 +440,7 @@ ${post.content}
 `;
 	});
 
+	postsDiv.innerHTML = html;
 });
 </script>
 
