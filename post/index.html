@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Moechat</title>
+
+<style>
+
+body{
+	margin:0;
+	font-family:Verdana;
+	background:#0b3d91;
+}
+
+.header{
+	background:#1c4fa3;
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+}
+
+.nav{
+	display:flex;
+	flex-wrap:wrap;
+}
+
+.nav a{
+	color:white;
+	padding:12px 18px;
+	text-decoration:none;
+}
+
+.banner{
+	width:768px;
+	height:80px;
+	display:block;
+	object-fit:cover;
+}
+
+.container{
+	max-width:1200px;
+	margin:auto;
+	padding:10px;
+}
+
+.post,
+.comments,
+.commentBox{
+	background:white;
+	padding:10px;
+	margin-bottom:10px;
+	border:1px solid #888;
+}
+
+.post-title{
+	font-size:26px;
+	font-weight:bold;
+	color:#0055aa;
+	overflow-wrap:anywhere;
+}
+
+.post-meta{
+	font-size:12px;
+	color:#666;
+	margin-top:5px;
+}
+
+.post-content{
+	margin-top:15px;
+	white-space:pre-wrap;
+	overflow-wrap:anywhere;
+}
+
+.comment{
+	border-top:1px solid #ddd;
+	padding-top:10px;
+	margin-top:10px;
+}
+
+.comment-author{
+	font-weight:bold;
+	color:#0055aa;
+}
+
+.comment-date{
+	font-size:12px;
+	color:#666;
+}
+
+.comment-content{
+	margin-top:8px;
+	overflow-wrap:anywhere;
+}
+
+textarea{
+	width:100%;
+	box-sizing:border-box;
+	padding:8px;
+	margin-top:10px;
+}
+
+button{
+	background:#2b6fff;
+	color:white;
+	border:none;
+	padding:10px;
+	cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<header class="header">
+
+<nav class="nav">
+<a href="/moechat/">Home</a>
+<a href="/moechat/top">Top</a>
+<a href="/moechat/recent">Recent</a>
+</nav>
+
+</header>
+
+<img
+class="banner"
+src="https://frostcat224.github.io/moechat/banners/logo.png"
+>
+
+<div class="container">
+
+<div id="post">
+Loading...
+</div>
+
+<div class="commentBox">
+
+<h3>Add Comment</h3>
+
+<div id="loginStatus">
+Checking login...
+</div>
+
+<textarea
+id="commentText"
+rows="4"
+placeholder="Write comment..."
+></textarea>
+
+<button id="sendComment">
+Comment
+</button>
+
+</div>
+
+<div class="comments">
+
+<h3>Comments</h3>
+
+<div id="comments">
+No comments
+</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import {
+initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+get,
+push,
+set,
+onValue
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+import {
+getAuth,
+onAuthStateChanged
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+authDomain:"moechat-224.firebaseapp.com",
+databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+projectId:"moechat-224",
+storageBucket:"moechat-224.firebasestorage.app",
+messagingSenderId:"147503997820",
+appId:"1:147503997820:web:1bb59dc4936825af87baf9"
+};
+
+const app=initializeApp(firebaseConfig);
+
+const db=getDatabase(app);
+
+const auth=getAuth(app);
+
+const id=
+new URLSearchParams(
+location.search
+).get("id");
+
+const postDiv=
+document.getElementById("post");
+
+const commentsDiv=
+document.getElementById("comments");
+
+const loginStatus=
+document.getElementById("loginStatus");
+
+let currentUser=null;
+
+function date(ts){
+return new Date(ts)
+.toLocaleString();
+}
+
+async function loadPost(){
+
+if(!id){
+
+postDiv.innerHTML=
+"Post not found";
+
+return;
+
+}
+
+const snap=
+await get(
+ref(db,"posts/"+id)
+);
+
+if(!snap.exists()){
+
+postDiv.innerHTML=
+"Post missing";
+
+return;
+
+}
+
+const p=snap.val();
+
+document.title=
+p.title+
+" - Moechat";
+
+postDiv.innerHTML=`
+
+<div class="post">
+
+<div class="post-title">
+${p.title}
+</div>
+
+<div class="post-meta">
+
+${p.score||0}
+
+•
+
+posted by
+${p.author}
+
+•
+
+${date(p.timestamp)}
+
+</div>
+
+<div class="post-content">
+${p.content}
+</div>
+
+</div>
+
+`;
+
+}
+
+function loadComments(){
+
+onValue(
+ref(
+db,
+"comments/"+id
+),
+(s)=>{
+
+if(!s.exists()){
+
+commentsDiv.innerHTML=
+"No comments";
+
+return;
+
+}
+
+let list=
+Object
+.entries(
+s.val()
+);
+
+list.sort(
+(a,b)=>
+
+b[1].timestamp-
+a[1].timestamp
+);
+
+let html="";
+
+list.forEach(
+([k,c])=>{
+
+html+=`
+
+<div class="comment">
+
+<div class="comment-author">
+${c.author}
+</div>
+
+<div class="comment-date">
+${date(c.timestamp)}
+</div>
+
+<div class="comment-content">
+${c.content}
+</div>
+
+</div>
+
+`;
+
+});
+
+commentsDiv.innerHTML=
+html;
+
+});
+
+}
+
+onAuthStateChanged(
+auth,
+async(user)=>{
+
+currentUser=user;
+
+if(user){
+
+const u=
+await get(
+ref(
+db,
+"users/"+user.uid
+)
+);
+
+loginStatus.textContent=
+"Logged in";
+
+window.username=
+u.val()?.username
+||
+user.email;
+
+}
+
+else{
+
+loginStatus.textContent=
+"Login to comment";
+
+}
+
+});
+
+document
+.getElementById(
+"sendComment"
+)
+.onclick=
+async()=>{
+
+if(!currentUser){
+
+alert(
+"Login first"
+);
+
+return;
+
+}
+
+const text=
+document
+.getElementById(
+"commentText"
+)
+.value
+.trim();
+
+if(!text){
+
+return;
+
+}
+
+const newComment=
+push(
+ref(
+db,
+"comments/"+id
+)
+);
+
+await set(
+newComment,
+{
+
+content:text,
+
+author:
+window.username,
+
+timestamp:
+Date.now()
+
+}
+);
+
+document
+.getElementById(
+"commentText"
+)
+.value="";
+
+};
+
+loadPost();
+
+loadComments();
+
+</script>
+
+</body>
+</html>
