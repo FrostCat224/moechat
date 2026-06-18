@@ -175,6 +175,11 @@ button{
 
 <input id="title" placeholder="Title">
 <textarea id="content" rows="5" placeholder="Content"></textarea>
+	<label>
+	<input type="checkbox" id="isNews" style="width:auto;">
+	Is a news article
+</label>
+
 
 <button id="submit">Post</button>
 
@@ -386,6 +391,8 @@ document.getElementById("submit").onclick = async () => {
 
 	const title = titleInput.value.trim();
 	const content = contentInput.value.trim();
+	const isNews =
+	document.getElementById("isNews").checked;
 
 	if (!title || !content) {
 		alert("Fill in everything!!!");
@@ -409,11 +416,13 @@ document.getElementById("submit").onclick = async () => {
 		author: username,
 		uid: user.uid,
 		score: 0,
-		timestamp: Date.now()
+		timestamp: Date.now(),
+		isNews
 	});
 
 	titleInput.value = "";
 	contentInput.value = "";
+	document.getElementById("isNews").checked = false;
 };
 
 async function vote(id, type){
@@ -439,7 +448,88 @@ async function vote(id, type){
 
 window.vote = vote;
 
+let ownerUsers = [];
+let adminUsers = [];
+let verifiedUsers = [];
 
+async function loadBadges(){
+
+	try{
+
+		const owner =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/owner.txt"
+			);
+
+		ownerUsers =
+			(await owner.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+		const admin =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/admins.txt"
+			);
+
+		adminUsers =
+			(await admin.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+		const verified =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/verified.txt"
+			);
+
+		verifiedUsers =
+			(await verified.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+	}catch{}
+}
+
+function getBadges(user){
+
+	let html = "";
+
+	if(ownerUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/owner.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	if(adminUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/admin.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	if(verifiedUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/verified.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	return html;
+}
+
+loadBadges();
 onValue(ref(db, "posts"), (snapshot) => {
 
 	const data = snapshot.val();
@@ -494,8 +584,21 @@ onclick="vote('${id}','up')">▲</span>
 <span class="vote ${voted==="down"?"active":""}"
 onclick="vote('${id}','down')">▼</span>
 
-• posted by ${post.author}
-• ${formatDate(post.timestamp)}
+• posted by ${post.author}${getBadges(post.author)}
+
+•
+
+${post.isNews ? `
+<img
+src="https://frostcat224.github.io/moechat/banners/news.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-right:4px;
+">
+` : ""}
+
+${formatDate(post.timestamp)}
 
 </div>
 
