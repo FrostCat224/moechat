@@ -128,7 +128,13 @@ button{
 <a href="https://frostcat224.github.io/moechat/news">News</a>
 </nav>
 
+<div>
+
+<button id="toggleAccount" class="createBtn">Account</button>
+
 <button id="toggleCreate" class="createBtn">＋ Post</button>
+
+</div>
 
 </header>
 
@@ -136,7 +142,7 @@ button{
 
 <div class="container">
 
-<div class="create" id="createBox">
+<div class="create" id="accountBox">
 
 <h3>Account</h3>
 
@@ -150,9 +156,15 @@ button{
 
 <div id="status">Not logged in</div>
 
-<br>
+</div>
+
+<div class="create" id="createBox">
 
 <h3>Create Post</h3>
+
+<div id="postStatus">Not logged in</div>
+
+<br>
 
 <input id="title" placeholder="Title">
 <textarea id="content" rows="5" placeholder="Content"></textarea>
@@ -220,14 +232,43 @@ const passwordInput = document.getElementById("password");
 const usernameInput = document.getElementById("username");
 
 const statusBox = document.getElementById("status");
+	const postStatus =
+	document.getElementById("postStatus");
 
 const titleInput = document.getElementById("title");
 const contentInput = document.getElementById("content");
 
 
+document.getElementById("toggleAccount").onclick = () => {
+
+	const accountBox =
+		document.getElementById("accountBox");
+
+	const createBox =
+		document.getElementById("createBox");
+
+	accountBox.style.display =
+		accountBox.style.display === "block"
+			? "none"
+			: "block";
+
+	createBox.style.display = "none";
+};
+
 document.getElementById("toggleCreate").onclick = () => {
-	const box = document.getElementById("createBox");
-	box.style.display = box.style.display === "block" ? "none" : "block";
+
+	const accountBox =
+		document.getElementById("accountBox");
+
+	const createBox =
+		document.getElementById("createBox");
+
+	createBox.style.display =
+		createBox.style.display === "block"
+			? "none"
+			: "block";
+
+	accountBox.style.display = "none";
 };
 
 function formatDate(ts){
@@ -235,7 +276,20 @@ function formatDate(ts){
 }
 
 
+async function usernameExists(username){
 
+	const snap = await get(ref(db, "users"));
+
+	if(!snap.exists()) return false;
+
+	const users = Object.values(snap.val());
+
+	return users.some(user =>
+		user.username &&
+		user.username.toLowerCase() ===
+		username.toLowerCase()
+	);
+}
 document.getElementById("register").onclick = async () => {
 
 	try {
@@ -246,6 +300,11 @@ document.getElementById("register").onclick = async () => {
 			alert("Enter username");
 			return;
 		}
+
+		if (await usernameExists(username)) {
+	alert("Username already exists");
+	return;
+}
 
 		const cred = await createUserWithEmailAndPassword(
 			auth,
@@ -290,12 +349,20 @@ onAuthStateChanged(auth, async (user) => {
 		const snap = await get(ref(db, "users/" + user.uid));
 
 		const username =
-			snap.exists() ? snap.val().username : user.email;
+			snap.exists()
+				? snap.val().username
+				: user.email;
 
-		statusBox.textContent = "Logged in as: " + username;
+		const text =
+			"Logged in as: " + username;
+
+		statusBox.textContent = text;
+		postStatus.textContent = text;
 
 	} else {
+
 		statusBox.textContent = "Not logged in";
+		postStatus.textContent = "Not logged in";
 	}
 
 });
