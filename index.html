@@ -73,6 +73,10 @@ body{
     overflow-wrap:anywhere;
 }
 
+.post-title:hover{
+	text-decoration:underline;
+}
+
 .post-meta{
 	font-size:12px;
 	color:#666;
@@ -474,7 +478,10 @@ onValue(ref(db, "posts"), (snapshot) => {
 		html += `
 <div class="post">
 
-<div class="post-title">${post.title}</div>
+<div class="post-title"
+onclick="location.href='https://frostcat224.github.io/moechat/post?id=${id}'">
+${post.title}
+</div>
 
 <div class="post-meta">
 
