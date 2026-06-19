@@ -303,20 +303,13 @@ async function usernameExists(username){
 	);
 }
 document.getElementById("register").onclick = async () => {
-
 	try {
-
 		const username = usernameInput.value.trim();
-
-		if (!username) {
-			alert("Enter username");
-			return;
-		}
+		if (!username) return alert("Enter username");
 
 		if (await usernameExists(username)) {
-	alert("Username already exists");
-	return;
-}
+			return alert("Username already exists");
+		}
 
 		const cred = await createUserWithEmailAndPassword(
 			auth,
@@ -324,12 +317,23 @@ document.getElementById("register").onclick = async () => {
 			passwordInput.value
 		);
 
+
+		await new Promise((resolve) => {
+			const unsub = onAuthStateChanged(auth, (user) => {
+				if (user && user.uid === cred.user.uid) {
+					unsub();
+					resolve();
+				}
+			});
+		});
+
 		await set(ref(db, "users/" + cred.user.uid), {
 			username,
 			email: cred.user.email
 		});
 
 	} catch (e) {
+		console.error(e.code, e.message);
 		alert(e.message);
 	}
 };
