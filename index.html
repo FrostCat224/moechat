@@ -562,9 +562,18 @@ onValue(ref(db, "posts"), (snapshot) => {
 
 	let html = "";
 
-	selected.forEach(([id, post]) => {
+	for (const [id, post] of selected) {
 
 		const voted = localStorage.getItem("vote_" + id);
+		const comments =
+	await get(ref(db,"comments/"+id));
+
+const commentCount =
+	comments.exists()
+	? Object.keys(
+		comments.val()
+	).length
+	: 0;
 
 		html += `
 <div class="post">
@@ -602,6 +611,7 @@ ${formatDate(post.timestamp)}
 
 •
 
+
 <span
 style="
 cursor:pointer;
@@ -612,13 +622,8 @@ location.href=
 'https://frostcat224.github.io/moechat/post?id=${id}'
 ">
 
- ${
-post.comments
-? Object.keys(post.comments).length
-: 0
-}
-
-comments
+ ${commentCount}
+comment${commentCount===1?"":"s"}
 
 </span>
 
