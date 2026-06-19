@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Moechat</title>
+
+<style>
+
+body{
+	margin:0;
+	font-family:Verdana;
+	background:#0b3d91;
+}
+
+.header{
+	background:#1c4fa3;
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+}
+
+.nav{
+	display:flex;
+	flex-wrap:wrap;
+}
+
+.nav a{
+	color:white;
+	padding:12px 18px;
+	text-decoration:none;
+}
+
+.createBtn{ 
+	background:#2b6fff; 
+	color:white; 
+	border:none; 
+	padding:12px 18px; 
+	height:43px;
+}
+
+
+.banner{
+	width:768px;
+	height:80px;
+	display:block;
+	object-fit:cover;
+}
+
+.container{
+	max-width:1200px;
+	margin:auto;
+	padding:10px;
+}
+
+.post,
+.create{
+	background:white;
+	padding:10px;
+	margin-bottom:10px;
+	border:1px solid #888;
+}
+
+.create{
+	display:none;
+}
+
+.post-title{
+    font-size:18px;
+    font-weight:bold;
+    color:#0055aa;
+    overflow-wrap:anywhere;
+	cursor:pointer;
+}
+
+.post-title:hover{
+	text-decoration:underline;
+}
+
+.post-meta{
+	font-size:12px;
+	color:#666;
+	margin-top:4px;
+}
+
+.post-content{
+    margin-top:8px;
+    overflow-wrap: anywhere;
+}
+
+input,
+textarea{
+	width:100%;
+	box-sizing:border-box;
+	padding:8px;
+	margin-top:5px;
+	margin-bottom:10px;
+}
+
+button{
+	cursor:pointer;
+}
+
+.vote{
+	font-size:18px;
+	cursor:pointer;
+	user-select:none;
+	padding:0 4px;
+}
+
+.score{
+	color:#ff4500;
+	font-weight:bold;
+}
+
+.active{
+	color:#ff0000;
+}
+
+</style>
+</head>
+
+<body>
+	
+
+<header class="header">
+
+<nav class="nav">
+<a href="https://frostcat224.github.io/moechat/">Home</a>
+<a href="https://frostcat224.github.io/moechat/top">Top</a>
+<a href="https://frostcat224.github.io/moechat/bottom">Bottom</a>
+<a href="https://frostcat224.github.io/moechat/recent">Recent</a>
+<a href="https://frostcat224.github.io/moechat/trending">Trending</a>
+<a href="https://frostcat224.github.io/moechat/news">News</a>
+</nav>
+
+<div>
+
+<button id="toggleAccount" class="createBtn">Account</button>
+
+<button id="toggleCreate" class="createBtn">Post</button>
+
+</div>
+
+</header>
+
+<img class="banner" src="https://frostcat224.github.io/moechat/banners/logo.png" alt="Banner">
+
+<div class="container">
+
+<div class="create" id="accountBox">
+
+<h3>Account</h3>
+
+<input id="username" placeholder="Username">
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button id="register">Register</button>
+<button id="login">Login</button>
+<button id="logout">Logout</button>
+
+<div id="status">Not logged in</div>
+
+</div>
+
+<div class="create" id="createBox">
+
+<h3>Create Post</h3>
+
+<div id="postStatus">Not logged in</div>
+
+<br>
+
+<input id="title" placeholder="Title">
+<textarea id="content" rows="5" placeholder="Content"></textarea>
+	<label>
+	<input type="checkbox" id="isNews" style="width:auto;">
+	Is a news article
+</label>
+
+
+<button id="submit">Post</button>
+
+</div>
+
+<div id="posts">Loading...</div>
+
+</div>
+
+<script type="module">
+
+
+const POSTS_TO_SHOW = 10; 
+
+const RANDOM_PERCENT = 0.10;
+const RECENT_PERCENT = 0.40;
+const TRENDING_PERCENT = 0.50;
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+import {
+	getDatabase,
+	ref,
+	onValue,
+	push,
+	set,
+	update,
+	get
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+import {
+	getAuth,
+	createUserWithEmailAndPassword,
+	signInWithEmailAndPassword,
+	signOut,
+	onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+
+
+const firebaseConfig = {
+	apiKey:"AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+	authDomain:"moechat-224.firebaseapp.com",
+	databaseURL:"https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+	projectId:"moechat-224",
+	storageBucket:"moechat-224.firebasestorage.app",
+	messagingSenderId:"147503997820",
+	appId:"1:147503997820:web:1bb59dc4936825af87baf9",
+	measurementId:"G-R6MRNWQGZ2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+let feedIds = null;
+
+const postsDiv = document.getElementById("posts");
+
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const usernameInput = document.getElementById("username");
+
+const statusBox = document.getElementById("status");
+	const postStatus =
+	document.getElementById("postStatus");
+
+const titleInput = document.getElementById("title");
+const contentInput = document.getElementById("content");
+
+
+document.getElementById("toggleAccount").onclick = () => {
+
+	const accountBox =
+		document.getElementById("accountBox");
+
+	const createBox =
+		document.getElementById("createBox");
+
+	accountBox.style.display =
+		accountBox.style.display === "block"
+			? "none"
+			: "block";
+
+	createBox.style.display = "none";
+};
+
+document.getElementById("toggleCreate").onclick = () => {
+
+	const accountBox =
+		document.getElementById("accountBox");
+
+	const createBox =
+		document.getElementById("createBox");
+
+	createBox.style.display =
+		createBox.style.display === "block"
+			? "none"
+			: "block";
+
+	accountBox.style.display = "none";
+};
+
+function formatDate(ts){
+	return new Date(ts).toLocaleString();
+}
+
+
+async function usernameExists(username){
+
+	const snap = await get(ref(db, "users"));
+
+	if(!snap.exists()) return false;
+
+	const users = Object.values(snap.val());
+
+	return users.some(user =>
+		user.username &&
+		user.username.toLowerCase() ===
+		username.toLowerCase()
+	);
+}
+document.getElementById("register").onclick = async () => {
+
+	try {
+
+		const username = usernameInput.value.trim();
+
+		if (!username) {
+			alert("Enter username");
+			return;
+		}
+
+		if (await usernameExists(username)) {
+	alert("Username already exists");
+	return;
+}
+
+		const cred = await createUserWithEmailAndPassword(
+			auth,
+			emailInput.value,
+			passwordInput.value
+		);
+
+		await set(ref(db, "users/" + cred.user.uid), {
+			username,
+			email: cred.user.email
+		});
+
+	} catch (e) {
+		alert(e.message);
+	}
+};
+
+
+
+document.getElementById("login").onclick = async () => {
+	try {
+		await signInWithEmailAndPassword(
+			auth,
+			emailInput.value,
+			passwordInput.value
+		);
+	} catch (e) {
+		alert(e.message);
+	}
+};
+
+document.getElementById("logout").onclick = () => {
+	signOut(auth);
+};
+
+
+
+onAuthStateChanged(auth, async (user) => {
+
+	if (user) {
+
+		const snap = await get(ref(db, "users/" + user.uid));
+
+		const username =
+			snap.exists()
+				? snap.val().username
+				: user.email;
+
+		const text =
+			"Logged in as: " + username;
+
+		statusBox.textContent = text;
+		postStatus.textContent = text;
+
+	} else {
+
+		statusBox.textContent = "Not logged in";
+		postStatus.textContent = "Not logged in";
+	}
+
+});
+
+
+document.getElementById("submit").onclick = async () => {
+
+	const user = auth.currentUser;
+
+	if (!user) {
+		alert("You must be logged in!!!");
+		return;
+	}
+
+	const title = titleInput.value.trim();
+	const content = contentInput.value.trim();
+	const isNews =
+	document.getElementById("isNews").checked;
+
+	if (!title || !content) {
+		alert("Fill in everything!!!");
+		return;
+	}
+
+	const snap = await get(ref(db, "users/" + user.uid));
+
+	if (!snap.exists() || !snap.val().username) {
+		alert("Username missing. Please re-register.");
+		return;
+	}
+
+	const username = snap.val().username;
+
+	const newPost = push(ref(db, "posts"));
+
+	await set(newPost, {
+		title,
+		content,
+		author: username,
+		uid: user.uid,
+		score: 0,
+		timestamp: Date.now(),
+		isNews
+	});
+
+	titleInput.value = "";
+	contentInput.value = "";
+	document.getElementById("isNews").checked = false;
+};
+
+async function vote(id, type){
+
+	const key = "vote_" + id;
+
+	if (localStorage.getItem(key)) return;
+
+	const postRef = ref(db, "posts/" + id);
+	const snap = await get(postRef);
+
+	if (!snap.exists()) return;
+
+	let score = snap.val().score || 0;
+
+	if (type === "up") score++;
+	if (type === "down") score--;
+
+	await update(postRef, { score });
+
+	localStorage.setItem(key, type);
+}
+
+window.vote = vote;
+
+let ownerUsers = [];
+let adminUsers = [];
+let verifiedUsers = [];
+
+async function loadBadges(){
+
+	try{
+
+		const owner =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/owner.txt"
+			);
+
+		ownerUsers =
+			(await owner.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+		const admin =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/admins.txt"
+			);
+
+		adminUsers =
+			(await admin.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+		const verified =
+			await fetch(
+				"https://frostcat224.github.io/moechat/important/verified.txt"
+			);
+
+		verifiedUsers =
+			(await verified.text())
+			.split("\n")
+			.map(v=>v.trim());
+
+	}catch{}
+}
+
+function getBadges(user){
+
+	let html = "";
+
+	if(ownerUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/owner.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	if(adminUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/admin.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	if(verifiedUsers.includes(user)){
+		html += `
+<img
+src="https://frostcat224.github.io/moechat/banners/verified.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-left:2px;
+">`;
+	}
+
+	return html;
+}
+
+loadBadges();
+onValue(ref(db, "posts"), async (snapshot) => {
+
+	const data = snapshot.val();
+
+	postsDiv.innerHTML = "";
+
+	if (!data) {
+		postsDiv.innerHTML = "No posts";
+		return;
+	}
+
+	let posts = Object.entries(data);
+
+
+posts.sort((a, b) => {
+	return (b[1].score || 0) - (a[1].score || 0);
+});
+
+let selected = posts.slice(0, POSTS_TO_SHOW);
+
+
+	let html = "";
+
+	for (const [id, post] of selected) {
+
+		const voted = localStorage.getItem("vote_" + id);
+		const comments =
+	await get(ref(db,"comments/"+id));
+
+const commentCount =
+	comments.exists()
+	? Object.keys(
+		comments.val()
+	).length
+	: 0;
+
+		html += `
+<div class="post">
+
+<div class="post-title"
+onclick="location.href='https://frostcat224.github.io/moechat/post?id=${id}'">
+${post.title}
+</div>
+
+<div class="post-meta">
+
+<span class="vote ${voted==="up"?"active":""}"
+onclick="vote('${id}','up')">▲</span>
+
+<span class="score">${post.score || 0}</span>
+
+<span class="vote ${voted==="down"?"active":""}"
+onclick="vote('${id}','down')">▼</span>
+
+• posted by ${post.author}${getBadges(post.author)}
+
+•
+
+${post.isNews ? `
+<img
+src="https://frostcat224.github.io/moechat/banners/news.png"
+style="
+height:1em;
+vertical-align:middle;
+margin-right:4px;
+">
+` : ""}
+
+${formatDate(post.timestamp)}
+
+•
+
+
+<span
+style="
+cursor:pointer;
+color:#0055aa;
+"
+onclick="
+location.href=
+'https://frostcat224.github.io/moechat/post?id=${id}'
+">
+
+ ${commentCount}
+comment${commentCount===1?"":"s"}
+
+</span>
+
+</div>
+
+<div class="post-content">
+${post.content}
+</div>
+
+</div>
+`;
+	}
+
+	postsDiv.innerHTML = html;
+});
+</script>
+
+</body>
+</html>
