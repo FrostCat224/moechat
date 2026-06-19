@@ -434,18 +434,21 @@ document.getElementById("submit").onclick = async () => {
 async function vote(id, type){
 
 	const key = "vote_" + id;
-
 	if (localStorage.getItem(key)) return;
 
 	const postRef = ref(db, "posts/" + id);
 	const snap = await get(postRef);
-
 	if (!snap.exists()) return;
 
 	let score = snap.val().score || 0;
 
 	if (type === "up") score++;
 	if (type === "down") score--;
+
+	const scoreEl = document.getElementById("score-" + id);
+	if (scoreEl) {
+		scoreEl.textContent = score;
+	}
 
 	await update(postRef, { score });
 
@@ -540,7 +543,12 @@ onValue(ref(db, "posts"), async (snapshot) => {
 
 	const data = snapshot.val();
 
-	postsDiv.innerHTML = "";
+	if (!data) {
+		postsDiv.innerHTML = "No posts";
+		return;
+	}
+
+	if (!feedIds) postsDiv.innerHTML = "";
 
 	if (!data) {
 		postsDiv.innerHTML = "No posts";
@@ -594,7 +602,7 @@ ${post.title}
 <span class="vote ${voted==="up"?"active":""}"
 onclick="vote('${id}','up')">▲</span>
 
-<span class="score">${post.score || 0}</span>
+<span class="score" id="score-${id}">${post.score || 0}</span>
 
 <span class="vote ${voted==="down"?"active":""}"
 onclick="vote('${id}','down')">▼</span>
