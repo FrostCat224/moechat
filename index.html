@@ -530,7 +530,7 @@ margin-left:2px;
 }
 
 loadBadges();
-onValue(ref(db, "posts"), (snapshot) => {
+onValue(ref(db, "posts"), async (snapshot) => {
 
 	const data = snapshot.val();
 
