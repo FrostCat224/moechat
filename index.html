@@ -600,6 +600,28 @@ margin-right:4px;
 
 ${formatDate(post.timestamp)}
 
+•
+
+<span
+style="
+cursor:pointer;
+color:#0055aa;
+"
+onclick="
+location.href=
+'https://frostcat224.github.io/moechat/post?id=${id}'
+">
+
+ ${
+post.comments
+? Object.keys(post.comments).length
+: 0
+}
+
+comments
+
+</span>
+
 </div>
 
 <div class="post-content">
