@@ -303,6 +303,7 @@ async function usernameExists(username){
 	);
 }
 document.getElementById("register").onclick = async () => {
+	console.log("REGISTER CLICKED");
 	try {
 		const username = usernameInput.value.trim();
 		if (!username) return alert("Enter username");
@@ -341,6 +342,7 @@ document.getElementById("register").onclick = async () => {
 
 
 document.getElementById("login").onclick = async () => {
+	console.log("LOGIN CLICKED");
 	try {
 		await signInWithEmailAndPassword(
 			auth,
