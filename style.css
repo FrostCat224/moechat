@@ -308,7 +308,7 @@ button {
 .comment-content {
     margin-top: 6px;
     overflow-wrap: anywhere;
-    white-space: pre-wrap;
+    white-space: normal;
 }
 
 
