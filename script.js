@@ -1,5 +1,5 @@
 
-const POSTS_TO_SHOW = 10;
+const POSTS_TO_SHOW = 50;
 
 import {
     initializeApp
