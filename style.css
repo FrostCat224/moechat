@@ -253,8 +253,9 @@ button {
     margin-left: 2px;
 }
 
-.commentBox,
-.comments {
+
+
+.commentBox {
     background: white;
     padding: 10px;
     margin-bottom: 10px;
@@ -262,14 +263,31 @@ button {
 }
 
 .commentBox h3 {
-    margin-top: 0;
+    margin: 0 0 10px 0;
     color: #17467f;
 }
 
+.comments {
+    background: white;
+    border: 1px solid #888;
+    margin-bottom: 10px;
+    padding: 0;
+}
+
+.comments .forum-header {
+    margin: 0;
+    border: none;
+    border-bottom: 1px solid #888;
+}
+
+#comments {
+    padding: 0 10px;
+}
+
 .comment {
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #ddd;
     padding: 10px 0;
-    margin-top: 5px;
+    margin: 0;
 }
 
 .comment:first-child {
@@ -288,10 +306,11 @@ button {
 }
 
 .comment-content {
-    margin-top: 8px;
+    margin-top: 6px;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
+
 
 @media (max-width: 650px) {
 
