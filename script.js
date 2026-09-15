@@ -449,9 +449,36 @@ function getBadges(user) {
 loadBadges();
 
 
-/* =========================
-   LOAD POSTS
-========================= */
+async function loadSidebarLinks() {
+    const sidebar = document.getElementById("sidebarLinks");
+
+    try {
+        const response = await fetch("links.json");
+
+        if (!response.ok) {
+            throw new Error("Could not load links.json");
+        }
+
+        const links = await response.json();
+
+        sidebar.innerHTML = "";
+
+        links.forEach(link => {
+            const a = document.createElement("a");
+
+            a.href = link.url;
+            a.textContent = link.name;
+
+            sidebar.appendChild(a);
+        });
+
+    } catch (error) {
+        console.error("Error loading sidebar links:", error);
+        sidebar.innerHTML = "Failed to load links";
+    }
+}
+
+loadSidebarLinks();
 
 onValue(
     ref(db, "posts"),
