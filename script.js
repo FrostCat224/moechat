@@ -1,4 +1,4 @@
-```javascript
+
 const POSTS_TO_SHOW = 10;
 
 import {
@@ -610,4 +610,4 @@ onValue(
         postsDiv.innerHTML = html;
     }
 );
-```
+
