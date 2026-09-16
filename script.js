@@ -71,16 +71,14 @@ let pageConfig = {
 };
 
 function convertEmojis(text) {
-
     if (!text) {
         return "";
     }
 
     return text.replace(
-        /\\:([a-zA-Z0-9_-]+):/g,
+        /\/:([a-zA-Z0-9_-]+):/g,
         '<emoji type="$1"></emoji>'
     );
-
 }
 
 async function loadPageConfig() {
