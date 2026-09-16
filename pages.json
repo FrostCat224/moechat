@@ -17,7 +17,7 @@
 
     "top": {
         "header": "Top",
-        "background": "banners/gold.png",
+        "background": "https://frostcat224.github.io/moechat/banners/gold.png",
         "filter": "all",
         "order": "score",
         "posts": 50
