@@ -17,7 +17,7 @@
 
     "top": {
         "header": "Top",
-        "background": "banners/popular-bg.png",
+        "background": "banners/gold.png",
         "filter": "all",
         "order": "score",
         "posts": 50
