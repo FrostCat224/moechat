@@ -13,7 +13,7 @@
 <title>Moechat</title>
 
 <link rel="stylesheet" href="../style.css">
-
+<script src="https://r74n.com/moji/load.js"></script>
 </head>
 
 <body>
@@ -172,7 +172,64 @@ const loginStatus =
 
 
 let currentUser = null;
+function renderEmojis(container) {
 
+    container.querySelectorAll("emoji").forEach(emoji => {
+
+        const type =
+            emoji.getAttribute("type");
+
+        if (!type) return;
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width = 480;
+        canvas.height = 480;
+
+        canvas.style.width = "1.75em";
+        canvas.style.height = "1.75em";
+        canvas.style.display = "inline-block";
+        canvas.style.verticalAlign = "middle";
+
+        const img = new Image();
+
+        img.onload = () => {
+
+            const ctx =
+                canvas.getContext("2d");
+
+            ctx.drawImage(
+                img,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+        };
+
+        img.src =
+            "https://r74n.com/moji/png/" +
+            encodeURIComponent(type) +
+            ".png";
+
+        emoji.replaceWith(canvas);
+
+    });
+
+}
+function convertEmojis(text) {
+
+    if (!text) {
+        return "";
+    }
+
+    return text.replace(
+        /\/:([a-zA-Z0-9_-]+):/g,
+        '<emoji type="$1"></emoji>'
+    );
+}
 
 function date(ts) {
 
@@ -250,13 +307,12 @@ async function loadPost() {
 
 
             <div class="post-content">
-                ${p.content}
+                ${convertEmojis(p.content)}
             </div>
-
         </div>
 
     `;
-
+renderEmojis(postDiv);
 }
 
 
@@ -320,7 +376,7 @@ function loadComments() {
 
 
                             <div class="comment-content">
-                                ${c.content}
+                                ${convertEmojis(c.content)}
                             </div>
 
                         </div>
@@ -333,6 +389,7 @@ function loadComments() {
 
             commentsDiv.innerHTML =
                 html;
+            renderEmojis(commentsDiv);
 
         }
     );
