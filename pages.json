@@ -9,7 +9,7 @@
 
     "news": {
         "header": "News",
-        "background": "banners/newsbg.png",
+        "background": "https://frostcat224.github.io/moechat/banners/newsbg.png",
         "filter": "news",
         "order": "newest",
         "posts": 50
