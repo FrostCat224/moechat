@@ -801,6 +801,17 @@ function sortPosts(posts) {
             break;
 
 
+        case "least-score":
+
+            posts.sort(
+                ([, a], [, b]) =>
+                    (a.score || 0) -
+                    (b.score || 0)
+            );
+
+            break;
+
+
         case "comments":
 
             posts.sort(
@@ -827,7 +838,6 @@ function sortPosts(posts) {
     }
 
 }
-
 
 /* =========================
    POST FILTERING
