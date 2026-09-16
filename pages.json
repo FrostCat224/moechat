@@ -21,5 +21,12 @@
         "filter": "all",
         "order": "score",
         "posts": 50
+    },
+    "bottom": {
+        "header": "Bottom",
+        "background": "https://frostcat224.github.io/moechat/banners/bottom.png",
+        "filter": "all",
+        "order": "least-score",
+        "posts": 50
     }
 }
