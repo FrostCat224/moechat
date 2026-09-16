@@ -1,0 +1,25 @@
+{
+    "home": {
+        "header": "Home",
+        "background": "banners/bg.png",
+        "filter": "all",
+        "order": "newest",
+        "posts": 50
+    },
+
+    "news": {
+        "header": "News",
+        "background": "banners/newsbg.png",
+        "filter": "news",
+        "order": "newest",
+        "posts": 50
+    },
+
+    "top": {
+        "header": "Top",
+        "background": "banners/popular-bg.png",
+        "filter": "all",
+        "order": "score",
+        "posts": 50
+    }
+}
