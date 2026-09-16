@@ -83,7 +83,7 @@ async function loadPageConfig() {
     try {
 
         const response =
-            await fetch("pages.json");
+            await fetch("https://frostcat224.github.io/moechat/pages.json");
 
         if (!response.ok) {
             throw new Error("Could not load pages.json");
@@ -713,7 +713,7 @@ async function loadSidebarLinks() {
 
         const response =
             await fetch(
-                "links.json"
+                "https://frostcat224.github.io/moechat/links.json"
             );
 
 
