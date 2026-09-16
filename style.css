@@ -1,8 +1,11 @@
-
 body {
     margin: 0;
     font-family: Verdana, Arial, sans-serif;
-    background: #4081f2;
+    background-color: #4081f2;
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    background-attachment: fixed;
     color: #111;
     font-size: 13px;
 }
