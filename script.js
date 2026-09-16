@@ -1176,26 +1176,47 @@ if (user) {
             }
 
 
-            postsDiv.innerHTML =
-                html;
- postsDiv.querySelectorAll("emoji").forEach(emoji => {
+postsDiv.innerHTML = html;
+
+postsDiv.querySelectorAll("emoji").forEach(emoji => {
     const type = emoji.getAttribute("type");
 
     if (!type) return;
 
-    const img = document.createElement("img");
+    const canvas = document.createElement("canvas");
 
-    img.src = `https://r74n.com/moji/png/${type}.png`;
-    img.alt = type;
-    img.title = type;
+    canvas.width = 480;
+    canvas.height = 480;
 
-    img.style.width = "1.75em";
-    img.style.height = "1.75em";
-    img.style.display = "inline-block";
-    img.style.verticalAlign = "middle";
-    img.style.objectFit = "contain";
+    canvas.style.width = "1.75em";
+    canvas.style.height = "1.75em";
+    canvas.style.display = "inline-block";
+    canvas.style.verticalAlign = "middle";
 
-    emoji.replaceWith(img);
+    const img = new Image();
+
+    img.onload = () => {
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(
+            img,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+    };
+
+    img.onerror = () => {
+        console.error("R74moji failed to load:", type);
+    };
+
+    img.src =
+        "https://r74n.com/moji/png/" +
+        encodeURIComponent(type) +
+        ".png";
+
+    emoji.replaceWith(canvas);
 });
            
 
