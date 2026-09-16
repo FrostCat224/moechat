@@ -509,17 +509,30 @@ document.getElementById("submit").onclick =
     };
 
 
-/* =========================
-   VOTING
-========================= */
+
 
 async function vote(id, type) {
 
-    const key =
-        "vote_" + id;
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("You must be logged in to vote!");
+        return;
+    }
 
 
-    if (localStorage.getItem(key)) {
+    const userVoteRef =
+        ref(
+            db,
+            "users/" + user.uid + "/votes/" + id
+        );
+
+
+    const voteSnap =
+        await get(userVoteRef);
+
+
+    if (voteSnap.exists()) {
         return;
     }
 
@@ -554,6 +567,25 @@ async function vote(id, type) {
     }
 
 
+    await update(
+        postRef,
+        {
+            score
+        }
+    );
+
+
+    /*
+     * Save the vote to the user's account.
+     */
+
+    await set(
+        userVoteRef,
+        type
+    );
+
+
+
     const scoreEl =
         document.getElementById(
             "score-" + id
@@ -568,20 +600,37 @@ async function vote(id, type) {
     }
 
 
-    await update(
-        postRef,
-        {
-            score
+    /*
+     * Update the button appearance.
+     */
+
+    const post =
+        document.querySelector(
+            `.post[data-post-id="${id}"]`
+        );
+
+    if (post) {
+
+        const buttons =
+            post.querySelectorAll(".vote");
+
+        buttons.forEach(button =>
+            button.classList.remove("active")
+        );
+
+        if (type === "up") {
+            buttons[0].classList.add("active");
         }
-    );
 
+        if (type === "down") {
+            buttons[1].classList.add("active");
+        }
 
-    localStorage.setItem(
-        key,
-        type
-    );
+    }
 
 }
+
+
 
 
 window.vote = vote;
@@ -906,6 +955,26 @@ async function loadPosts() {
             let posts =
                 Object.entries(data);
 
+           let userVotes = {};
+
+const user = auth.currentUser;
+
+if (user) {
+
+    const votesSnap =
+        await get(
+            ref(
+                db,
+                "users/" + user.uid + "/votes"
+            )
+        );
+
+    if (votesSnap.exists()) {
+        userVotes = votesSnap.val();
+    }
+
+}
+
 
             /*
              * Filter posts according
@@ -944,18 +1013,8 @@ async function loadPosts() {
             }
 
 
-            /*
-             * Sort according
-             * to the current page.
-             */
-
             sortPosts(posts);
 
-
-            /*
-             * Limit the number
-             * of posts shown.
-             */
 
             posts =
                 posts.slice(
@@ -968,24 +1027,17 @@ async function loadPosts() {
             let html = "";
 
 
-            /* =========================
-               CREATE POST HTML
-            ========================= */
-
             for (
                 const [id, post]
                 of posts
             ) {
 
                 const voted =
-                    localStorage.getItem(
-                        "vote_" + id
-                    );
-
+                      userVotes[id] || null;
 
                 html += `
 
-                    <div class="post">
+                    <div class="post" data-post-id="${id}">
 
                         <div
                             class="post-title"
