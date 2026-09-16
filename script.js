@@ -1,5 +1,9 @@
-
 const POSTS_TO_SHOW = 50;
+
+
+/* =========================
+   FIREBASE
+========================= */
 
 import {
     initializeApp
@@ -40,6 +44,11 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
+
+/* =========================
+   ELEMENTS
+========================= */
+
 const postsDiv = document.getElementById("posts");
 
 const emailInput = document.getElementById("email");
@@ -54,13 +63,108 @@ const contentInput = document.getElementById("content");
 
 
 /* =========================
+   PAGE CONFIGURATION
+========================= */
+
+let pageConfig = {
+    header: "Home",
+    background: "",
+    filter: "all",
+    order: "newest",
+    posts: POSTS_TO_SHOW
+};
+
+
+async function loadPageConfig() {
+
+    const pageName =
+        document.body.dataset.page || "home";
+
+    try {
+
+        const response =
+            await fetch("pages.json");
+
+        if (!response.ok) {
+            throw new Error("Could not load pages.json");
+        }
+
+        const pages =
+            await response.json();
+
+        if (pages[pageName]) {
+
+            pageConfig = {
+                ...pageConfig,
+                ...pages[pageName]
+            };
+
+        } else {
+
+            console.warn(
+                "Page '" +
+                pageName +
+                "' was not found in pages.json"
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error loading page configuration:",
+            error
+        );
+
+    }
+
+
+    /* =========================
+       CHANGE PAGE BACKGROUND
+    ========================= */
+
+    if (pageConfig.background) {
+
+        document.body.style.backgroundImage =
+            `url("${pageConfig.background}")`;
+
+    }
+
+
+    /* =========================
+       CHANGE HEADER
+    ========================= */
+
+    const forumHeader =
+        document.querySelector(".forum-header");
+
+    if (forumHeader && pageConfig.header) {
+
+        forumHeader.textContent =
+            pageConfig.header;
+
+    }
+
+
+    /* =========================
+       LOAD POSTS
+    ========================= */
+
+    loadPosts();
+}
+
+
+/* =========================
    BOX TOGGLES
 ========================= */
 
 function toggleBox(boxId, otherBoxId) {
 
-    const box = document.getElementById(boxId);
-    const other = document.getElementById(otherBoxId);
+    const box =
+        document.getElementById(boxId);
+
+    const other =
+        document.getElementById(otherBoxId);
 
     box.style.display =
         box.style.display === "block"
@@ -72,19 +176,42 @@ function toggleBox(boxId, otherBoxId) {
 
 
 document.getElementById("toggleAccount").onclick = () => {
-    toggleBox("accountBox", "createBox");
+
+    toggleBox(
+        "accountBox",
+        "createBox"
+    );
+
 };
+
 
 document.getElementById("toggleCreate").onclick = () => {
-    toggleBox("createBox", "accountBox");
+
+    toggleBox(
+        "createBox",
+        "accountBox"
+    );
+
 };
+
 
 document.getElementById("sidebarAccount").onclick = () => {
-    toggleBox("accountBox", "createBox");
+
+    toggleBox(
+        "accountBox",
+        "createBox"
+    );
+
 };
 
+
 document.getElementById("sidebarPost").onclick = () => {
-    toggleBox("createBox", "accountBox");
+
+    toggleBox(
+        "createBox",
+        "accountBox"
+    );
+
 };
 
 
@@ -93,7 +220,10 @@ document.getElementById("sidebarPost").onclick = () => {
 ========================= */
 
 function formatDate(timestamp) {
-    return new Date(timestamp).toLocaleString();
+
+    return new Date(timestamp)
+        .toLocaleString();
+
 }
 
 
@@ -103,13 +233,19 @@ function formatDate(timestamp) {
 
 async function usernameExists(username) {
 
-    const snap = await get(ref(db, "users"));
+    const snap =
+        await get(
+            ref(db, "users")
+        );
 
     if (!snap.exists()) {
         return false;
     }
 
-    const users = Object.values(snap.val());
+    const users =
+        Object.values(
+            snap.val()
+        );
 
     return users.some(user =>
         user.username &&
@@ -123,183 +259,254 @@ async function usernameExists(username) {
    REGISTER
 ========================= */
 
-document.getElementById("register").onclick = async () => {
+document.getElementById("register").onclick =
+    async () => {
 
-    try {
+        try {
 
-        const username = usernameInput.value.trim();
+            const username =
+                usernameInput.value.trim();
 
-        if (!username) {
-            alert("Enter username");
-            return;
-        }
+            if (!username) {
 
-        if (await usernameExists(username)) {
-            alert("Username already exists");
-            return;
-        }
+                alert("Enter username");
+                return;
 
-        const cred =
-            await createUserWithEmailAndPassword(
-                auth,
-                emailInput.value,
-                passwordInput.value
+            }
+
+
+            if (await usernameExists(username)) {
+
+                alert("Username already exists");
+                return;
+
+            }
+
+
+            const cred =
+                await createUserWithEmailAndPassword(
+                    auth,
+                    emailInput.value,
+                    passwordInput.value
+                );
+
+
+            await set(
+                ref(
+                    db,
+                    "users/" + cred.user.uid
+                ),
+                {
+                    username,
+                    email: cred.user.email
+                }
             );
 
-        await set(
-            ref(db, "users/" + cred.user.uid),
-            {
-                username,
-                email: cred.user.email
-            }
-        );
 
-    } catch (e) {
+        } catch (e) {
 
-        console.error(e);
+            console.error(e);
 
-        alert(e.message);
-    }
-};
+            alert(e.message);
+
+        }
+
+    };
 
 
 /* =========================
    LOGIN
 ========================= */
 
-document.getElementById("login").onclick = async () => {
+document.getElementById("login").onclick =
+    async () => {
 
-    try {
+        try {
 
-        await signInWithEmailAndPassword(
-            auth,
-            emailInput.value,
-            passwordInput.value
-        );
+            await signInWithEmailAndPassword(
+                auth,
+                emailInput.value,
+                passwordInput.value
+            );
 
-    } catch (e) {
+        } catch (e) {
 
-        alert(e.message);
-    }
-};
+            alert(e.message);
+
+        }
+
+    };
 
 
 /* =========================
    LOGOUT
 ========================= */
 
-document.getElementById("logout").onclick = () => {
-    signOut(auth);
-};
+document.getElementById("logout").onclick =
+    () => {
+
+        signOut(auth);
+
+    };
 
 
 /* =========================
    AUTH STATE
 ========================= */
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+    auth,
+    async (user) => {
 
-    if (user) {
+        if (user) {
 
-        const snap =
-            await get(
-                ref(db, "users/" + user.uid)
-            );
+            const snap =
+                await get(
+                    ref(
+                        db,
+                        "users/" + user.uid
+                    )
+                );
 
-        const username =
-            snap.exists()
-                ? snap.val().username
-                : user.email;
 
-        const text =
-            "Logged in as: " + username;
+            const username =
+                snap.exists()
+                    ? snap.val().username
+                    : user.email;
 
-        statusBox.textContent = text;
-        postStatus.textContent = text;
 
-    } else {
+            const text =
+                "Logged in as: " + username;
 
-        statusBox.textContent =
-            "Not logged in";
 
-        postStatus.textContent =
-            "Not logged in";
+            statusBox.textContent =
+                text;
+
+            postStatus.textContent =
+                text;
+
+
+        } else {
+
+            statusBox.textContent =
+                "Not logged in";
+
+            postStatus.textContent =
+                "Not logged in";
+
+        }
+
     }
-});
+);
 
 
 /* =========================
    CREATE POST
 ========================= */
 
-document.getElementById("submit").onclick = async () => {
+document.getElementById("submit").onclick =
+    async () => {
 
-    const user = auth.currentUser;
+        const user =
+            auth.currentUser;
 
-    if (!user) {
+        if (!user) {
 
-        alert("You must be logged in!!!");
-        return;
-    }
+            alert(
+                "You must be logged in!!!"
+            );
 
-    const title =
-        titleInput.value.trim();
+            return;
 
-    const content =
-        contentInput.value.trim();
+        }
 
-    const isNews =
-        document.getElementById("isNews").checked;
 
-    if (!title || !content) {
+        const title =
+            titleInput.value.trim();
 
-        alert("Fill in everything!!!");
-        return;
-    }
+        const content =
+            contentInput.value.trim();
 
-    const snap =
-        await get(
-            ref(db, "users/" + user.uid)
+        const isNews =
+            document.getElementById(
+                "isNews"
+            ).checked;
+
+
+        if (!title || !content) {
+
+            alert(
+                "Fill in everything!!!"
+            );
+
+            return;
+
+        }
+
+
+        const snap =
+            await get(
+                ref(
+                    db,
+                    "users/" + user.uid
+                )
+            );
+
+
+        if (
+            !snap.exists() ||
+            !snap.val().username
+        ) {
+
+            alert(
+                "Username missing. Please re-register."
+            );
+
+            return;
+
+        }
+
+
+        const username =
+            snap.val().username;
+
+
+        const newPost =
+            push(
+                ref(db, "posts")
+            );
+
+
+        await set(
+            newPost,
+            {
+
+                title,
+                content,
+
+                author: username,
+
+                uid: user.uid,
+
+                score: 0,
+
+                timestamp: Date.now(),
+
+                isNews
+
+            }
         );
 
-    if (!snap.exists() ||
-        !snap.val().username) {
 
-        alert(
-            "Username missing. Please re-register."
-        );
+        titleInput.value = "";
 
-        return;
-    }
+        contentInput.value = "";
 
-    const username =
-        snap.val().username;
+        document.getElementById(
+            "isNews"
+        ).checked = false;
 
-    const newPost =
-        push(ref(db, "posts"));
-
-    await set(newPost, {
-
-        title,
-        content,
-
-        author: username,
-
-        uid: user.uid,
-
-        score: 0,
-
-        timestamp: Date.now(),
-
-        isNews
-    });
-
-    titleInput.value = "";
-    contentInput.value = "";
-
-    document.getElementById("isNews").checked =
-        false;
-};
+    };
 
 
 /* =========================
@@ -308,48 +515,74 @@ document.getElementById("submit").onclick = async () => {
 
 async function vote(id, type) {
 
-    const key = "vote_" + id;
+    const key =
+        "vote_" + id;
+
 
     if (localStorage.getItem(key)) {
         return;
     }
 
+
     const postRef =
-        ref(db, "posts/" + id);
+        ref(
+            db,
+            "posts/" + id
+        );
+
 
     const snap =
         await get(postRef);
+
 
     if (!snap.exists()) {
         return;
     }
 
+
     let score =
         snap.val().score || 0;
+
 
     if (type === "up") {
         score++;
     }
 
+
     if (type === "down") {
         score--;
     }
+
 
     const scoreEl =
         document.getElementById(
             "score-" + id
         );
 
+
     if (scoreEl) {
-        scoreEl.textContent = score;
+
+        scoreEl.textContent =
+            score;
+
     }
 
-    await update(postRef, {
-        score
-    });
 
-    localStorage.setItem(key, type);
+    await update(
+        postRef,
+        {
+            score
+        }
+    );
+
+
+    localStorage.setItem(
+        key,
+        type
+    );
+
 }
+
 
 window.vote = vote;
 
@@ -402,15 +635,23 @@ async function loadBadges() {
                 .map(v => v.trim())
                 .filter(Boolean);
 
+
     } catch (e) {
-        console.error("Badge loading failed", e);
+
+        console.error(
+            "Badge loading failed",
+            e
+        );
+
     }
+
 }
 
 
 function getBadges(user) {
 
     let html = "";
+
 
     if (ownerUsers.includes(user)) {
 
@@ -420,7 +661,9 @@ function getBadges(user) {
                 alt="Owner"
             >
         `;
+
     }
+
 
     if (adminUsers.includes(user)) {
 
@@ -430,7 +673,9 @@ function getBadges(user) {
                 alt="Admin"
             >
         `;
+
     }
+
 
     if (verifiedUsers.includes(user)) {
 
@@ -440,201 +685,433 @@ function getBadges(user) {
                 alt="Verified"
             >
         `;
+
     }
 
+
     return html;
+
 }
 
 
 loadBadges();
 
 
+/* =========================
+   SIDEBAR LINKS
+========================= */
+
 async function loadSidebarLinks() {
-    const sidebar = document.getElementById("sidebarLinks");
+
+    const sidebar =
+        document.getElementById(
+            "sidebarLinks"
+        );
+
 
     try {
-        const response = await fetch("links.json");
+
+        const response =
+            await fetch(
+                "links.json"
+            );
+
 
         if (!response.ok) {
-            throw new Error("Could not load links.json");
+
+            throw new Error(
+                "Could not load links.json"
+            );
+
         }
 
-        const links = await response.json();
+
+        const links =
+            await response.json();
+
 
         sidebar.innerHTML = "";
 
-        links.forEach(link => {
-            const a = document.createElement("a");
 
-            a.href = link.url;
-            a.textContent = link.name;
+        links.forEach(link => {
+
+            const a =
+                document.createElement("a");
+
+
+            a.href =
+                link.url;
+
+
+            a.textContent =
+                link.name;
+
 
             sidebar.appendChild(a);
+
         });
 
+
     } catch (error) {
-        console.error("Error loading sidebar links:", error);
-        sidebar.innerHTML = "Failed to load links";
+
+        console.error(
+            "Error loading sidebar links:",
+            error
+        );
+
+
+        sidebar.innerHTML =
+            "Failed to load links";
+
     }
+
 }
+
 
 loadSidebarLinks();
 
-onValue(
-    ref(db, "posts"),
-    async (snapshot) => {
 
-        const data = snapshot.val();
+/* =========================
+   POST SORTING
+========================= */
 
-        if (!data) {
+function sortPosts(posts) {
 
-            postsDiv.innerHTML =
-                "No posts";
+    switch (pageConfig.order) {
 
-            return;
-        }
+        case "oldest":
 
+            posts.sort(
+                ([, a], [, b]) =>
+                    (a.timestamp || 0) -
+                    (b.timestamp || 0)
+            );
 
-        /*
-         * Convert Firebase object
-         * into an array.
-         *
-         * Then sort newest first.
-         */
-        let posts =
-            Object.entries(data)
-                .sort(
-                    ([, a], [, b]) =>
-                        (b.timestamp || 0) -
-                        (a.timestamp || 0)
-                )
-                .slice(0, POSTS_TO_SHOW);
+            break;
 
 
-        let html = "";
+        case "score":
+
+            posts.sort(
+                ([, a], [, b]) =>
+                    (b.score || 0) -
+                    (a.score || 0)
+            );
+
+            break;
 
 
-        for (const [id, post] of posts) {
+        case "comments":
 
-            const voted =
-                localStorage.getItem(
-                    "vote_" + id
+            posts.sort(
+                ([, a], [, b]) =>
+                    (b.commentCount || 0) -
+                    (a.commentCount || 0)
+            );
+
+            break;
+
+
+        case "newest":
+
+        default:
+
+            posts.sort(
+                ([, a], [, b]) =>
+                    (b.timestamp || 0) -
+                    (a.timestamp || 0)
+            );
+
+            break;
+
+    }
+
+}
+
+
+/* =========================
+   POST FILTERING
+========================= */
+
+function filterPosts(posts) {
+
+    switch (pageConfig.filter) {
+
+        case "news":
+
+            return posts.filter(
+                ([, post]) =>
+                    post.isNews === true
+            );
+
+
+        case "non-news":
+
+            return posts.filter(
+                ([, post]) =>
+                    post.isNews !== true
+            );
+
+
+        case "all":
+
+        default:
+
+            return posts;
+
+    }
+
+}
+
+
+/* =========================
+   LOAD POSTS
+========================= */
+
+async function loadPosts() {
+
+    onValue(
+        ref(db, "posts"),
+        async (snapshot) => {
+
+            const data =
+                snapshot.val();
+
+
+            if (!data) {
+
+                postsDiv.innerHTML =
+                    "No posts";
+
+                return;
+
+            }
+
+
+            /*
+             * Convert Firebase object
+             * into an array.
+             */
+
+            let posts =
+                Object.entries(data);
+
+
+            /*
+             * Filter posts according
+             * to the current page.
+             */
+
+            posts =
+                filterPosts(posts);
+
+
+            /*
+             * Get comment counts.
+             */
+
+            for (
+                const [id, post]
+                of posts
+            ) {
+
+                const comments =
+                    await get(
+                        ref(
+                            db,
+                            "comments/" + id
+                        )
+                    );
+
+
+                post.commentCount =
+                    comments.exists()
+                        ? Object.keys(
+                            comments.val()
+                        ).length
+                        : 0;
+
+            }
+
+
+            /*
+             * Sort according
+             * to the current page.
+             */
+
+            sortPosts(posts);
+
+
+            /*
+             * Limit the number
+             * of posts shown.
+             */
+
+            posts =
+                posts.slice(
+                    0,
+                    pageConfig.posts ||
+                    POSTS_TO_SHOW
                 );
 
 
-            const comments =
-                await get(
-                    ref(
-                        db,
-                        "comments/" + id
-                    )
-                );
+            let html = "";
 
 
-            const commentCount =
-                comments.exists()
-                    ? Object.keys(
-                        comments.val()
-                    ).length
-                    : 0;
+            /* =========================
+               CREATE POST HTML
+            ========================= */
+
+            for (
+                const [id, post]
+                of posts
+            ) {
+
+                const voted =
+                    localStorage.getItem(
+                        "vote_" + id
+                    );
 
 
-            html += `
+                html += `
 
-                <div class="post">
+                    <div class="post">
 
-                    <div
-                        class="post-title"
-                        onclick="
-                            location.href =
-                            'https://frostcat224.github.io/moechat/post?id=${id}'
-                        "
-                    >
-                        ${post.title}
-                    </div>
-
-
-                    <div class="post-meta">
-
-                        <span
-                            class="vote ${voted === "up" ? "active" : ""}"
-                            onclick="vote('${id}', 'up')"
-                        >
-                            ▲
-                        </span>
-
-
-                        <span
-                            class="score"
-                            id="score-${id}"
-                        >
-                            ${post.score || 0}
-                        </span>
-
-
-                        <span
-                            class="vote ${voted === "down" ? "active" : ""}"
-                            onclick="vote('${id}', 'down')"
-                        >
-                            ▼
-                        </span>
-
-
-                        • posted by
-
-                        ${post.author}
-
-                        ${getBadges(post.author)}
-
-                        •
-
-
-                        ${post.isNews ? `
-
-                            <img
-                                src="https://frostcat224.github.io/moechat/banners/news.png"
-                                alt="News"
-                            >
-
-                        ` : ""}
-
-
-                        ${formatDate(post.timestamp)}
-
-                        •
-
-
-                        <span
+                        <div
+                            class="post-title"
                             onclick="
                                 location.href =
                                 'https://frostcat224.github.io/moechat/post?id=${id}'
                             "
-                            style="
-                                cursor:pointer;
-                                color:#0055aa;
-                            "
                         >
 
-                            ${commentCount}
-                            comment${commentCount === 1 ? "" : "s"}
+                            ${post.title}
 
-                        </span>
+                        </div>
+
+
+                        <div class="post-meta">
+
+                            <span
+                                class="vote ${
+                                    voted === "up"
+                                        ? "active"
+                                        : ""
+                                }"
+                                onclick="
+                                    vote('${id}', 'up')
+                                "
+                            >
+                                ▲
+                            </span>
+
+
+                            <span
+                                class="score"
+                                id="score-${id}"
+                            >
+                                ${post.score || 0}
+                            </span>
+
+
+                            <span
+                                class="vote ${
+                                    voted === "down"
+                                        ? "active"
+                                        : ""
+                                }"
+                                onclick="
+                                    vote('${id}', 'down')
+                                "
+                            >
+                                ▼
+                            </span>
+
+
+                            • posted by
+
+
+                            ${post.author}
+
+
+                            ${getBadges(
+                                post.author
+                            )}
+
+
+                            •
+
+
+                            ${
+                                post.isNews
+                                    ? `
+                                        <img
+                                            src="https://frostcat224.github.io/moechat/banners/news.png"
+                                            alt="News"
+                                        >
+                                    `
+                                    : ""
+                            }
+
+
+                            ${formatDate(
+                                post.timestamp
+                            )}
+
+
+                            •
+
+
+                            <span
+                                onclick="
+                                    location.href =
+                                    'https://frostcat224.github.io/moechat/post?id=${id}'
+                                "
+                                style="
+                                    cursor:pointer;
+                                    color:#0055aa;
+                                "
+                            >
+
+                                ${
+                                    post.commentCount
+                                }
+
+                                comment${
+                                    post.commentCount === 1
+                                        ? ""
+                                        : "s"
+                                }
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="post-content">
+
+                            ${post.content}
+
+                        </div>
 
                     </div>
 
+                `;
 
-                    <div class="post-content">
+            }
 
-                        ${post.content}
 
-                    </div>
+            postsDiv.innerHTML =
+                html;
 
-                </div>
-            `;
         }
+    );
+
+}
 
 
-        postsDiv.innerHTML = html;
-    }
-);
+/* =========================
+   START PAGE
+========================= */
 
+loadPageConfig();
