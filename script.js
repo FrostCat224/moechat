@@ -74,6 +74,18 @@ let pageConfig = {
     posts: POSTS_TO_SHOW
 };
 
+function convertEmojis(text) {
+
+    if (!text) {
+        return "";
+    }
+
+    return text.replace(
+        /\\:([a-zA-Z0-9_-]+):/g,
+        '<emoji type="$1"></emoji>'
+    );
+
+}
 
 async function loadPageConfig() {
 
@@ -144,6 +156,10 @@ async function loadPageConfig() {
             pageConfig.header;
 
     }
+   
+/* =========================
+   R74MOJI
+========================= */
 
 
     /* =========================
@@ -1152,9 +1168,9 @@ if (user) {
 
                         <div class="post-content">
 
-                            ${post.content}
+                         ${convertEmojis(post.content)}
 
-                        </div>
+                     </div>
 
                     </div>
 
@@ -1165,6 +1181,74 @@ if (user) {
 
             postsDiv.innerHTML =
                 html;
+
+           document.querySelectorAll("#posts emoji").forEach(emoji => {
+
+    if (emoji.getAttribute("loaded") === "true") {
+        return;
+    }
+
+    const type = emoji.getAttribute("type");
+
+    if (!type || !R74mojiData[type]) {
+        return;
+    }
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = 480;
+    canvas.height = 480;
+
+    canvas.style.width = "1.75em";
+    canvas.style.height = "1.75em";
+    canvas.style.minWidth = "1em";
+    canvas.style.minHeight = "1em";
+    canvas.style.display = "inline-block";
+    canvas.style.verticalAlign = "middle";
+    canvas.style.marginBottom = "0.3em";
+
+    canvas.title = R74mojiData[type][0];
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+
+    img.onload = function () {
+
+        const ctx = canvas.getContext("2d");
+
+        const ratio = Math.min(
+            canvas.width / img.width,
+            canvas.height / img.height
+        );
+
+        const x =
+            (canvas.width - img.width * ratio) / 2;
+
+        const y =
+            (canvas.height - img.height * ratio) / 2;
+
+        ctx.drawImage(
+            img,
+            0,
+            0,
+            img.width,
+            img.height,
+            x,
+            y,
+            img.width * ratio,
+            img.height * ratio
+        );
+
+    };
+
+    img.src =
+        "https://r74n.com/moji/png/" +
+        type +
+        ".png";
+
+    emoji.replaceWith(canvas);
+
+});
 
         }
     );
