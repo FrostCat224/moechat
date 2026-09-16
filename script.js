@@ -1,10 +1,6 @@
 const POSTS_TO_SHOW = 50;
 
 
-/* =========================
-   FIREBASE
-========================= */
-
 import {
     initializeApp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
