@@ -308,7 +308,8 @@ document.getElementById("register").onclick =
                 ),
                 {
                     username,
-                    email: cred.user.email
+                    email: cred.user.email,
+                    createdAt: Date.now()
                 }
             );
 
