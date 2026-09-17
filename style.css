@@ -314,6 +314,14 @@ button {
     white-space: normal;
 }
 
+.post-title img,
+.post-meta img,
+.comment-author img {
+    height: 1em;
+    width: auto;
+    vertical-align: middle;
+}
+
 
 @media (max-width: 650px) {
 
