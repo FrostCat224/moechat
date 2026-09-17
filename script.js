@@ -1104,7 +1104,9 @@ if (user) {
                             • posted by
 
 
-                            ${post.author}
+                            <a href="/moechat/account?id=${post.uid}">
+    ${post.author}
+</a>
 
 
                             ${getBadges(
