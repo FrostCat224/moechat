@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+>
+
+<title>Account - Moechat</title>
+
+<link
+    rel="stylesheet"
+    href="../style.css"
+>
+
+<script src="https://r74n.com/moji/load.js"></script>
+```
+
+</head>
+
+<body>
+
+<header class="header">
+
+```
+<div class="site-title">
+    Moechat
+</div>
+
+<nav class="nav">
+
+    <a href="/moechat/">
+        Home
+    </a>
+
+</nav>
+```
+
+</header>
+
+<div class="forum-layout">
+
+```
+<!-- =========================
+     SIDEBAR
+========================== -->
+
+<aside class="sidebar">
+
+    <div class="forum-header">
+        Moechat
+    </div>
+
+    <div id="sidebarLinks">
+        Loading...
+    </div>
+
+</aside>
+
+
+
+<main class="main-content">
+
+
+    <div class="comments">
+
+        <div class="forum-header">
+            Account
+        </div>
+
+        <div id="account">
+            Loading...
+        </div>
+
+    </div>
+
+
+
+    <!-- POSTS -->
+
+    <div class="comments">
+
+        <div class="forum-header">
+            Posts
+        </div>
+
+        <div id="userPosts">
+            Loading...
+        </div>
+
+    </div>
+
+
+
+    <!-- COMMENTS -->
+
+    <div class="comments">
+
+        <div class="forum-header">
+            Comments
+        </div>
+
+        <div id="userComments">
+            Loading...
+        </div>
+
+    </div>
+
+
+</main>
+```
+
+</div>
+
+<script type="module">
+
+import {
+    initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+
+import {
+    getDatabase,
+    ref,
+    get
+}
+from
+"https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyA75yvmawdHgeaHz0seDhGC5exvS-teIpc",
+
+    authDomain:
+        "moechat-224.firebaseapp.com",
+
+    databaseURL:
+        "https://moechat-224-default-rtdb.europe-west1.firebasedatabase.app",
+
+    projectId:
+        "moechat-224",
+
+    storageBucket:
+        "moechat-224.firebasestorage.app",
+
+    messagingSenderId:
+        "147503997820",
+
+    appId:
+        "1:147503997820:web:1bb59dc4936825af87baf9"
+
+};
+
+
+const app =
+    initializeApp(firebaseConfig);
+
+
+const db =
+    getDatabase(app);
+
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const accountDiv =
+    document.getElementById("account");
+
+const postsDiv =
+    document.getElementById("userPosts");
+
+const commentsDiv =
+    document.getElementById("userComments");
+
+
+
+/* =========================
+   ACCOUNT ID
+========================= */
+
+const accountId =
+    new URLSearchParams(
+        location.search
+    ).get("id");
+
+
+/* =========================
+   BADGES
+========================= */
+
+let ownerUsers = [];
+let adminUsers = [];
+let verifiedUsers = [];
+
+
+async function loadBadges() {
+
+    try {
+
+        const owner =
+            await fetch(
+                "https://frostcat224.github.io/moechat/important/owner.txt"
+            );
+
+        ownerUsers =
+            (await owner.text())
+                .split("\n")
+                .map(v => v.trim())
+                .filter(Boolean);
+
+
+        const admin =
+            await fetch(
+                "https://frostcat224.github.io/moechat/important/admins.txt"
+            );
+
+        adminUsers =
+            (await admin.text())
+                .split("\n")
+                .map(v => v.trim())
+                .filter(Boolean);
+
+
+        const verified =
+            await fetch(
+                "https://frostcat224.github.io/moechat/important/verified.txt"
+            );
+
+        verifiedUsers =
+            (await verified.text())
+                .split("\n")
+                .map(v => v.trim())
+                .filter(Boolean);
+
+    }
+
+    catch (e) {
+
+        console.error(
+            "Badge loading failed",
+            e
+        );
+
+    }
+
+}
+
+
+function getBadges(username) {
+
+    let html = "";
+
+
+    if (ownerUsers.includes(username)) {
+
+        html += `
+            <img
+                src="https://frostcat224.github.io/moechat/banners/owner.png"
+                alt="Owner"
+            >
+        `;
+
+    }
+
+
+    if (adminUsers.includes(username)) {
+
+        html += `
+            <img
+                src="https://frostcat224.github.io/moechat/banners/admin.png"
+                alt="Admin"
+            >
+        `;
+
+    }
+
+
+    if (verifiedUsers.includes(username)) {
+
+        html += `
+            <img
+                src="https://frostcat224.github.io/moechat/banners/verified.png"
+                alt="Verified"
+            >
+        `;
+
+    }
+
+
+    return html;
+
+}
+
+
+
+/* =========================
+   EMOJIS
+========================= */
+
+function convertEmojis(text) {
+
+    if (!text) {
+        return "";
+    }
+
+    return text.replace(
+        /\/:([a-zA-Z0-9_-]+):/g,
+        '<emoji type="$1"></emoji>'
+    );
+
+}
+
+
+function renderEmojis(container) {
+
+    container.querySelectorAll("emoji").forEach(emoji => {
+
+        const type =
+            emoji.getAttribute("type");
+
+        if (!type) return;
+
+
+        const canvas =
+            document.createElement("canvas");
+
+
+        canvas.width = 480;
+        canvas.height = 480;
+
+
+        canvas.style.width = "1.75em";
+        canvas.style.height = "1.75em";
+        canvas.style.display = "inline-block";
+        canvas.style.verticalAlign = "middle";
+
+
+        const img =
+            new Image();
+
+
+        img.onload = () => {
+
+            const ctx =
+                canvas.getContext("2d");
+
+
+            ctx.drawImage(
+                img,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+        };
+
+
+        img.onerror = () => {
+
+            console.error(
+                "R74moji failed to load:",
+                type
+            );
+
+        };
+
+
+        img.src =
+            "https://r74n.com/moji/png/" +
+            encodeURIComponent(type) +
+            ".png";
+
+
+        emoji.replaceWith(canvas);
+
+    });
+
+}
+
+
+
+/* =========================
+   DATE
+========================= */
+
+function formatDate(timestamp) {
+
+    return new Date(timestamp)
+        .toLocaleString();
+
+}
+
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+async function loadSidebarLinks() {
+
+    const sidebar =
+        document.getElementById(
+            "sidebarLinks"
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                "https://frostcat224.github.io/moechat/links.json"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Could not load links.json"
+            );
+
+        }
+
+
+        const links =
+            await response.json();
+
+
+        sidebar.innerHTML = "";
+
+
+        links.forEach(link => {
+
+            const a =
+                document.createElement("a");
+
+
+            a.href =
+                link.url;
+
+
+            a.textContent =
+                link.name;
+
+
+            sidebar.appendChild(a);
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error loading sidebar links:",
+            error
+        );
+
+
+        sidebar.innerHTML =
+            "Failed to load links";
+
+    }
+
+}
+
+
+
+/* =========================
+   LOAD ACCOUNT
+========================= */
+
+async function loadAccount() {
+
+    if (!accountId) {
+
+        accountDiv.innerHTML =
+            "Account not found";
+
+        postsDiv.innerHTML = "";
+        commentsDiv.innerHTML = "";
+
+        return;
+
+    }
+
+
+    const userSnap =
+        await get(
+            ref(
+                db,
+                "users/" + accountId
+            )
+        );
+
+
+    if (!userSnap.exists()) {
+
+        accountDiv.innerHTML =
+            "Account not found";
+
+        postsDiv.innerHTML = "";
+        commentsDiv.innerHTML = "";
+
+        return;
+
+    }
+
+
+    const user =
+        userSnap.val();
+
+
+    const username =
+        user.username ||
+        "Unknown User";
+
+
+    document.title =
+        username +
+        " - Moechat";
+
+
+    accountDiv.innerHTML = `
+
+        <div class="post">
+
+            <div class="post-title">
+
+                ${convertEmojis(username)}
+
+                ${getBadges(username)}
+
+            </div>
+
+
+            <div class="post-meta">
+
+                Moechat account
+
+            </div>
+
+
+        </div>
+
+    `;
+
+
+    renderEmojis(accountDiv);
+
+
+
+    await loadUserPosts(
+        username
+    );
+
+
+    await loadUserComments(
+        username
+    );
+
+}
+
+
+
+/* =========================
+   LOAD USER POSTS
+========================= */
+
+async function loadUserPosts(username) {
+
+    const snap =
+        await get(
+            ref(
+                db,
+                "posts"
+            )
+        );
+
+
+    if (!snap.exists()) {
+
+        postsDiv.innerHTML =
+            "No posts";
+
+        return;
+
+    }
+
+
+    const data =
+        snap.val();
+
+
+    let posts =
+        Object.entries(data)
+            .filter(
+                ([, post]) =>
+                    post.uid === accountId
+            );
+
+
+    posts.sort(
+        (a, b) =>
+            (b[1].timestamp || 0) -
+            (a[1].timestamp || 0)
+    );
+
+
+    if (posts.length === 0) {
+
+        postsDiv.innerHTML =
+            "No posts";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    posts.forEach(
+        ([id, post]) => {
+
+            html += `
+
+                <div class="post">
+
+                    <div
+                        class="post-title"
+                        onclick="
+                            location.href =
+                            '/moechat/post?id=${id}'
+                        "
+                        style="cursor:pointer;"
+                    >
+
+                        ${convertEmojis(post.title)}
+
+                    </div>
+
+
+                    <div class="post-meta">
+
+                        posted by
+
+                        ${convertEmojis(post.author)}
+
+                        ${getBadges(post.author)}
+
+                        •
+
+                        ${formatDate(
+                            post.timestamp
+                        )}
+
+                    </div>
+
+
+                    <div class="post-content">
+
+                        ${convertEmojis(post.content)}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    postsDiv.innerHTML =
+        html;
+
+
+    renderEmojis(postsDiv);
+
+}
+
+
+
+/* =========================
+   LOAD USER COMMENTS
+========================= */
+
+async function loadUserComments(username) {
+
+    const snap =
+        await get(
+            ref(
+                db,
+                "comments"
+            )
+        );
+
+
+    if (!snap.exists()) {
+
+        commentsDiv.innerHTML =
+            "No comments";
+
+        return;
+
+    }
+
+
+    const allComments =
+        snap.val();
+
+
+    let found = [];
+
+
+    Object.entries(
+        allComments
+    ).forEach(
+        ([postId, postComments]) => {
+
+            if (!postComments) {
+                return;
+            }
+
+
+            Object.entries(
+                postComments
+            ).forEach(
+                ([commentId, comment]) => {
+
+                    if (
+                        comment.author === username
+                    ) {
+
+                        found.push({
+
+                            postId,
+                            commentId,
+                            comment
+
+                        });
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    found.sort(
+        (a, b) =>
+            (b.comment.timestamp || 0) -
+            (a.comment.timestamp || 0)
+    );
+
+
+    if (found.length === 0) {
+
+        commentsDiv.innerHTML =
+            "No comments";
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    found.forEach(
+        item => {
+
+            const c =
+                item.comment;
+
+
+            html += `
+
+                <div class="comment">
+
+                    <div class="comment-author">
+
+                        ${convertEmojis(c.author)}
+
+                        ${getBadges(c.author)}
+
+                    </div>
+
+
+                    <div class="comment-date">
+
+                        ${formatDate(
+                            c.timestamp
+                        )}
+
+                    </div>
+
+
+                    <div
+                        class="comment-content"
+                        onclick="
+                            location.href =
+                            '/moechat/post?id=${item.postId}'
+                        "
+                        style="cursor:pointer;"
+                    >
+
+                        ${convertEmojis(c.content)}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    commentsDiv.innerHTML =
+        html;
+
+
+    renderEmojis(commentsDiv);
+
+}
+
+
+
+/* =========================
+   START
+========================= */
+
+await loadBadges();
+
+loadSidebarLinks();
+
+loadAccount();
+
+
+</script>
+
+</body>
+
+</html>
