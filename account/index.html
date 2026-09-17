@@ -551,10 +551,13 @@ async function loadAccount() {
 
 
             <div class="post-meta">
+                Created
+                ${user.createdAt
+                ? formatDate(user.createdAt)
+                : "Date unavailable"
+                }
 
-                Moechat account
-
-            </div>
+</div>
 
 
         </div>
